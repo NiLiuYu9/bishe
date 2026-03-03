@@ -1,0 +1,36 @@
+import { request, apiEndpoints } from '@/utils/request'
+import type { ApiItem, ApiCreateParams, ApiListParams, ApiStatistics } from '@/types/api'
+
+export const apiManagement = {
+  getList(params: ApiListParams) {
+    return request.get<{ list: ApiItem[]; total: number }>(apiEndpoints.api.list, params)
+  },
+
+  getDetail(id: string | number) {
+    return request.get<ApiItem>(`${apiEndpoints.api.detail}/${id}`)
+  },
+
+  create(data: ApiCreateParams) {
+    return request.post<ApiItem>(apiEndpoints.api.create, data)
+  },
+
+  update(id: string | number, data: Partial<ApiCreateParams>) {
+    return request.put<ApiItem>(`${apiEndpoints.api.update}/${id}`, data)
+  },
+
+  delete(id: string | number) {
+    return request.delete(`${apiEndpoints.api.delete}/${id}`)
+  },
+
+  getMyApis(params: ApiListParams) {
+    return request.get<{ list: ApiItem[]; total: number }>(apiEndpoints.api.myApis, params)
+  },
+
+  submitAudit(id: string | number) {
+    return request.post(`${apiEndpoints.api.audit}/${id}`)
+  },
+
+  getStatistics(id: string | number, params: { startDate: string; endDate: string }) {
+    return request.get<ApiStatistics>(`${apiEndpoints.api.statistics}/${id}`, params)
+  }
+}

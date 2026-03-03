@@ -1,0 +1,522 @@
+<template>
+  <div class="home-page">
+    <section class="hero-section">
+      <div class="hero-content">
+        <h1>发现、购买、上架API</h1>
+        <p class="hero-subtitle">一站式API交易平台，连接开发者与创新应用</p>
+        <div class="search-box">
+          <el-input
+            v-model="searchKeyword"
+            placeholder="搜索API名称、功能描述..."
+            size="large"
+            @keyup.enter="handleSearch"
+          >
+            <template #prefix>
+              <el-icon><Search /></el-icon>
+            </template>
+            <template #append>
+              <el-button type="primary" @click="handleSearch">搜索</el-button>
+            </template>
+          </el-input>
+        </div>
+        <div class="hot-keywords">
+          <span class="label">热门搜索：</span>
+          <el-tag
+            v-for="keyword in hotKeywords"
+            :key="keyword"
+            class="keyword-tag"
+            @click="searchByKeyword(keyword)"
+          >
+            {{ keyword }}
+          </el-tag>
+        </div>
+      </div>
+    </section>
+    
+    <section class="categories-section">
+      <h2 class="section-title">API分类</h2>
+      <div class="categories-grid">
+        <div
+          v-for="category in categories"
+          :key="category.id"
+          class="category-card"
+          @click="goToCategory(category.id)"
+        >
+          <div class="category-icon">
+            <el-icon :size="32"><component :is="category.icon" /></el-icon>
+          </div>
+          <h3>{{ category.name }}</h3>
+          <p>{{ category.description }}</p>
+          <span class="api-count">{{ category.apiCount }} 个API</span>
+        </div>
+      </div>
+    </section>
+    
+    <section class="featured-section">
+      <div class="section-header">
+        <h2 class="section-title">热门API</h2>
+        <el-button text type="primary" @click="router.push('/api')">
+          查看全部 <el-icon><ArrowRight /></el-icon>
+        </el-button>
+      </div>
+      <div class="api-grid">
+        <div
+          v-for="api in featuredApis"
+          :key="api.id"
+          class="api-card"
+          @click="goToApiDetail(api.id)"
+        >
+          <div class="api-header">
+            <el-tag :type="getMethodType(api.method)">{{ api.method }}</el-tag>
+            <span class="api-category">{{ api.category }}</span>
+          </div>
+          <h3 class="api-name">{{ api.name }}</h3>
+          <p class="api-desc">{{ api.description }}</p>
+          <div class="api-stats">
+            <span><el-icon><View /></el-icon> {{ api.callCount }} 次调用</span>
+            <span><el-icon><Star /></el-icon> {{ api.rating }}</span>
+          </div>
+          <div class="api-footer">
+            <span class="price">¥{{ api.price }}/{{ getPriceUnit(api.priceUnit) }}</span>
+            <el-button type="primary" size="small">查看详情</el-button>
+          </div>
+        </div>
+      </div>
+    </section>
+    
+    <section class="features-section">
+      <h2 class="section-title">为什么选择我们</h2>
+      <div class="features-grid">
+        <div class="feature-card">
+          <div class="feature-icon">
+            <el-icon :size="40"><Lock /></el-icon>
+          </div>
+          <h3>安全可靠</h3>
+          <p>AccessKey/SecretKey身份验证，保障API调用安全</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">
+            <el-icon :size="40"><TrendCharts /></el-icon>
+          </div>
+          <h3>数据可视化</h3>
+          <p>实时统计API调用数据，直观了解使用情况</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">
+            <el-icon :size="40"><Monitor /></el-icon>
+          </div>
+          <h3>在线测试</h3>
+          <p>购买前免费测试，确保API符合需求</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">
+            <el-icon :size="40"><ChatDotRound /></el-icon>
+          </div>
+          <h3>需求定制</h3>
+          <p>找不到合适的API？发布需求让开发者为您定制</p>
+        </div>
+      </div>
+    </section>
+    
+    <section class="cta-section">
+      <h2>开始您的API之旅</h2>
+      <p>立即注册，上架您的API或购买所需服务</p>
+      <div class="cta-buttons">
+        <el-button type="primary" size="large" @click="router.push('/register')">
+          免费注册
+        </el-button>
+        <el-button size="large" @click="router.push('/api')">
+          浏览API
+        </el-button>
+      </div>
+    </section>
+  </div>
+</template>
+
+<script setup lang="ts">
+import { ref } from 'vue'
+import { useRouter } from 'vue-router'
+import { 
+  Search, ArrowRight, View, Star, Lock, 
+  TrendCharts, Monitor, ChatDotRound,
+  DataLine, Document, Picture, Location, Money
+} from '@element-plus/icons-vue'
+
+const router = useRouter()
+
+const searchKeyword = ref('')
+const hotKeywords = ['天气查询', '身份证识别', '短信验证', '地图服务', '支付接口']
+
+const categories = ref([
+  { id: 1, name: '数据查询', description: '各类数据查询服务', icon: DataLine, apiCount: 128 },
+  { id: 2, name: '文档处理', description: '文档转换、识别等服务', icon: Document, apiCount: 86 },
+  { id: 3, name: '图像识别', description: '人脸识别、OCR等服务', icon: Picture, apiCount: 64 },
+  { id: 4, name: '位置服务', description: '地图、定位、导航服务', icon: Location, apiCount: 42 },
+  { id: 5, name: '支付服务', description: '支付、转账、退款服务', icon: Money, apiCount: 35 },
+  { id: 6, name: '更多分类', description: '探索更多API服务', icon: 'More', apiCount: 200 }
+])
+
+const featuredApis = ref([
+  {
+    id: 1,
+    name: '天气查询API',
+    description: '支持全国城市天气查询，实时天气、未来天气预报',
+    method: 'GET',
+    category: '数据查询',
+    price: 0.01,
+    priceUnit: 'per_call',
+    callCount: 125680,
+    rating: 4.8
+  },
+  {
+    id: 2,
+    name: '身份证OCR识别',
+    description: '高精度身份证识别，支持正反面识别',
+    method: 'POST',
+    category: '图像识别',
+    price: 0.05,
+    priceUnit: 'per_call',
+    callCount: 89560,
+    rating: 4.9
+  },
+  {
+    id: 3,
+    name: '短信验证码',
+    description: '支持三大运营商，到达率99.9%',
+    method: 'POST',
+    category: '通信服务',
+    price: 0.04,
+    priceUnit: 'per_call',
+    callCount: 256780,
+    rating: 4.7
+  },
+  {
+    id: 4,
+    name: '地图逆地理编码',
+    description: '经纬度转换为详细地址信息',
+    method: 'GET',
+    category: '位置服务',
+    price: 0.02,
+    priceUnit: 'per_call',
+    callCount: 67890,
+    rating: 4.6
+  }
+])
+
+const handleSearch = () => {
+  if (searchKeyword.value.trim()) {
+    router.push({ path: '/api', query: { keyword: searchKeyword.value } })
+  }
+}
+
+const searchByKeyword = (keyword: string) => {
+  router.push({ path: '/api', query: { keyword } })
+}
+
+const goToCategory = (id: number) => {
+  router.push({ path: '/api', query: { categoryId: id.toString() } })
+}
+
+const goToApiDetail = (id: number) => {
+  router.push(`/api/${id}`)
+}
+
+const getMethodType = (method: string) => {
+  const types: Record<string, string> = {
+    GET: 'success',
+    POST: 'primary',
+    PUT: 'warning',
+    DELETE: 'danger'
+  }
+  return types[method] || 'info'
+}
+
+const getPriceUnit = (unit: string) => {
+  const units: Record<string, string> = {
+    per_call: '次',
+    per_month: '月',
+    per_year: '年'
+  }
+  return units[unit] || unit
+}
+</script>
+
+<style scoped>
+.home-page {
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.hero-section {
+  background: linear-gradient(135deg, #1E3A8A 0%, #3B82F6 100%);
+  border-radius: 16px;
+  padding: 80px 48px;
+  text-align: center;
+  color: #fff;
+  margin-bottom: 48px;
+}
+
+.hero-content h1 {
+  font-size: 42px;
+  font-weight: 700;
+  margin-bottom: 16px;
+}
+
+.hero-subtitle {
+  font-size: 18px;
+  opacity: 0.9;
+  margin-bottom: 32px;
+}
+
+.search-box {
+  max-width: 600px;
+  margin: 0 auto 24px;
+}
+
+.search-box :deep(.el-input__wrapper) {
+  background: #fff;
+  border-radius: 8px;
+}
+
+.hot-keywords {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.hot-keywords .label {
+  opacity: 0.8;
+}
+
+.keyword-tag {
+  cursor: pointer;
+  background: rgba(255, 255, 255, 0.2);
+  border: none;
+  color: #fff;
+}
+
+.keyword-tag:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.section-title {
+  font-size: 28px;
+  font-weight: 600;
+  color: #1E3A8A;
+  margin-bottom: 24px;
+}
+
+.categories-section {
+  margin-bottom: 48px;
+}
+
+.categories-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 24px;
+}
+
+.category-card {
+  background: #fff;
+  border-radius: 12px;
+  padding: 24px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.category-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+}
+
+.category-icon {
+  width: 64px;
+  height: 64px;
+  background: #EFF6FF;
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 16px;
+  color: #1E40AF;
+}
+
+.category-card h3 {
+  font-size: 16px;
+  font-weight: 600;
+  color: #1E3A8A;
+  margin-bottom: 8px;
+}
+
+.category-card p {
+  font-size: 14px;
+  color: #475569;
+  margin-bottom: 12px;
+}
+
+.api-count {
+  font-size: 12px;
+  color: #3B82F6;
+}
+
+.featured-section {
+  margin-bottom: 48px;
+}
+
+.section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24px;
+}
+
+.api-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 24px;
+}
+
+.api-card {
+  background: #fff;
+  border-radius: 12px;
+  padding: 24px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.api-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+}
+
+.api-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.api-category {
+  font-size: 12px;
+  color: #475569;
+}
+
+.api-name {
+  font-size: 18px;
+  font-weight: 600;
+  color: #1E3A8A;
+  margin-bottom: 8px;
+}
+
+.api-desc {
+  font-size: 14px;
+  color: #475569;
+  margin-bottom: 16px;
+  line-height: 1.5;
+}
+
+.api-stats {
+  display: flex;
+  gap: 16px;
+  font-size: 13px;
+  color: #64748B;
+  margin-bottom: 16px;
+}
+
+.api-stats span {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.api-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 16px;
+  border-top: 1px solid #E2E8F0;
+}
+
+.price {
+  font-size: 18px;
+  font-weight: 600;
+  color: #22C55E;
+}
+
+.features-section {
+  margin-bottom: 48px;
+}
+
+.features-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 24px;
+}
+
+.feature-card {
+  background: #fff;
+  border-radius: 12px;
+  padding: 32px;
+  text-align: center;
+}
+
+.feature-icon {
+  color: #1E40AF;
+  margin-bottom: 16px;
+}
+
+.feature-card h3 {
+  font-size: 18px;
+  font-weight: 600;
+  color: #1E3A8A;
+  margin-bottom: 8px;
+}
+
+.feature-card p {
+  font-size: 14px;
+  color: #475569;
+}
+
+.cta-section {
+  background: linear-gradient(135deg, #1E3A8A 0%, #3B82F6 100%);
+  border-radius: 16px;
+  padding: 64px 48px;
+  text-align: center;
+  color: #fff;
+}
+
+.cta-section h2 {
+  font-size: 32px;
+  font-weight: 700;
+  margin-bottom: 12px;
+}
+
+.cta-section p {
+  font-size: 16px;
+  opacity: 0.9;
+  margin-bottom: 32px;
+}
+
+.cta-buttons {
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+}
+
+@media (max-width: 768px) {
+  .hero-section {
+    padding: 48px 24px;
+  }
+  
+  .hero-content h1 {
+    font-size: 28px;
+  }
+  
+  .categories-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+</style>
