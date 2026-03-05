@@ -143,7 +143,7 @@ const fetchUsers = async () => {
       pageSize: pagination.pageSize,
       keyword: filters.keyword
     })
-    users.value = res.data.list
+    users.value = res.data.records
     total.value = res.data.total
   } catch (error) {
     console.error('获取用户列表失败:', error)

@@ -14,7 +14,7 @@
         <h3 class="section-title">基本信息</h3>
         <el-form :model="userInfo" label-width="100px">
           <el-form-item label="用户名">
-            <el-input v-model="userInfo.username" disabled />
+            <el-input v-model="userInfo.username" />
           </el-form-item>
           <el-form-item label="邮箱">
             <el-input v-model="userInfo.email" />
@@ -75,17 +75,30 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive } from 'vue'
+import { ref, reactive, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import { useUserStore } from '@/stores/user'
+import { authApi } from '@/api/auth'
 
 const userStore = useUserStore()
 
 const userInfo = reactive({
-  username: userStore.userInfo?.username || 'developer',
-  email: userStore.userInfo?.email || 'dev@example.com',
-  phone: userStore.userInfo?.phone || '13800138000',
-  avatar: userStore.userInfo?.avatar || ''
+  username: '',
+  email: '',
+  phone: '',
+  avatar: ''
+})
+
+onMounted(async () => {
+  try {
+    await userStore.getUserInfo()
+    userInfo.username = userStore.userInfo?.username || ''
+    userInfo.email = userStore.userInfo?.email || ''
+    userInfo.phone = userStore.userInfo?.phone || ''
+    userInfo.avatar = userStore.userInfo?.avatar || ''
+  } catch (error) {
+    console.error('获取用户信息失败', error)
+  }
 })
 
 const accessKey = ref('ak_' + Math.random().toString(36).substr(2, 16))
@@ -98,17 +111,45 @@ const passwordForm = reactive({
   confirmPassword: ''
 })
 
-const saveProfile = () => {
-  ElMessage.success('保存成功')
+const saveProfile = async () => {
+  try {
+    await userStore.updateUserInfo({
+      username: userInfo.username,
+      email: userInfo.email,
+      phone: userInfo.phone
+    })
+    ElMessage.success('保存成功')
+  } catch (error) {
+    console.error('保存失败', error)
+  }
 }
 
-const changePassword = () => {
+const changePassword = async () => {
+  if (!passwordForm.oldPassword) {
+    ElMessage.error('请输入原密码')
+    return
+  }
+  if (!passwordForm.newPassword) {
+    ElMessage.error('请输入新密码')
+    return
+  }
   if (passwordForm.newPassword !== passwordForm.confirmPassword) {
     ElMessage.error('两次密码输入不一致')
     return
   }
-  ElMessage.success('密码修改成功')
-  showPasswordDialog.value = false
+  try {
+    await authApi.updatePassword({
+      oldPassword: passwordForm.oldPassword,
+      newPassword: passwordForm.newPassword
+    })
+    ElMessage.success('密码修改成功')
+    showPasswordDialog.value = false
+    passwordForm.oldPassword = ''
+    passwordForm.newPassword = ''
+    passwordForm.confirmPassword = ''
+  } catch (error) {
+    console.error('密码修改失败', error)
+  }
 }
 
 const copyAccessKey = () => {

@@ -30,7 +30,7 @@
             ¥{{ row.price }}/{{ getPriceUnit(row.priceUnit) }}
           </template>
         </el-table-column>
-        <el-table-column prop="callCount" label="调用次数" width="100" />
+        <el-table-column prop="invokeCount" label="调用次数" width="100" />
         <el-table-column prop="rating" label="评分" width="80" />
         <el-table-column prop="status" label="状态" width="100">
           <template #default="{ row }">
@@ -223,7 +223,7 @@ const mockApiList: ApiItem[] = [
     updateTime: '2024-01-01',
     docUrl: '',
     rating: 4.8,
-    callCount: 125680,
+    invokeCount: 125680,
     successCount: 125000,
     failCount: 680
   },
@@ -247,7 +247,7 @@ const mockApiList: ApiItem[] = [
     updateTime: '2024-01-02',
     docUrl: '',
     rating: 0,
-    callCount: 0,
+    invokeCount: 0,
     successCount: 0,
     failCount: 0
   }

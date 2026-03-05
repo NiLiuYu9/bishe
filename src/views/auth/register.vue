@@ -68,7 +68,7 @@
             
             <el-form-item>
               <el-checkbox v-model="agreeTerms">
-                我已阅读并同意 <a href="#">服务条款</a> 和 <a href="#">隐私政策</a>
+                我已阅读并同意<a href="#">服务条款</a> 和<a href="#">隐私政策</a>
               </el-checkbox>
             </el-form-item>
             

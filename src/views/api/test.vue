@@ -123,7 +123,7 @@ const api = ref<ApiItem>({
   updateTime: '',
   docUrl: '',
   rating: 0,
-  callCount: 0,
+  invokeCount: 0,
   successCount: 0,
   failCount: 0
 })
@@ -162,7 +162,7 @@ const fetchApiDetail = async () => {
       updateTime: '2024-01-01',
       docUrl: '',
       rating: 4.8,
-      callCount: 125680,
+      invokeCount: 125680,
       successCount: 125000,
       failCount: 680
     }
@@ -195,7 +195,7 @@ const handleTest = async () => {
           temperature: '25°C',
           weather: '晴',
           humidity: '45%',
-          wind: '东南风 3级'
+          wind: '东南风3级'
         }
       },
       responseTime: 120,

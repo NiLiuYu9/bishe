@@ -193,7 +193,7 @@ const fetchRequirements = async () => {
     requirements.value = res.data.list
     total.value = res.data.total
   } catch (error) {
-    console.error('获取需求列表失败:', error)
+    console.error('获取需求列表失败', error)
     requirements.value = mockRequirements
     total.value = mockRequirements.length
   } finally {

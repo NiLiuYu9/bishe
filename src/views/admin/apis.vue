@@ -138,7 +138,7 @@ const mockApis: ApiItem[] = [
     updateTime: '2024-01-18',
     docUrl: '',
     rating: 0,
-    callCount: 0,
+    invokeCount: 0,
     successCount: 0,
     failCount: 0
   },
@@ -162,7 +162,7 @@ const mockApis: ApiItem[] = [
     updateTime: '2024-01-17',
     docUrl: '',
     rating: 0,
-    callCount: 0,
+    invokeCount: 0,
     successCount: 0,
     failCount: 0
   }

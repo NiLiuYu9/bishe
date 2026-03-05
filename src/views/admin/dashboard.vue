@@ -117,7 +117,7 @@ const statistics = ref({
   totalRevenue: 56800,
   dailyActiveUsers: 256,
   dailyPageViews: 3580,
-  apiCallRanking: [] as { apiId: number; apiName: string; callCount: number }[],
+  apiCallRanking: [] as { apiId: number; apiName: string; invokeCount: number }[],
   dailyStats: [] as { date: string; activeUsers: number; pageViews: number; newUsers: number; newOrders: number }[]
 })
 

@@ -28,7 +28,7 @@
             <el-option label="价格从低到高" value="price_asc" />
             <el-option label="价格从高到低" value="price_desc" />
             <el-option label="评分最高" value="rating" />
-            <el-option label="调用最多" value="callCount" />
+            <el-option label="调用最多" value="invokeCount" />
           </el-select>
         </el-form-item>
         <el-form-item>
@@ -60,7 +60,7 @@
             <code>{{ api.endpoint }}</code>
           </div>
           <div class="api-stats">
-            <span><el-icon><View /></el-icon> {{ api.callCount }} 次调用</span>
+            <span><el-icon><View /></el-icon> {{ api.invokeCount }} 次调用</span>
             <span><el-icon><Star /></el-icon> {{ api.rating }}</span>
           </div>
           <div class="api-footer">
@@ -170,7 +170,7 @@ const mockApiList: ApiItem[] = [
     updateTime: '2024-01-01',
     docUrl: '',
     rating: 4.8,
-    callCount: 125680,
+    invokeCount: 125680,
     successCount: 125000,
     failCount: 680
   },
@@ -194,7 +194,7 @@ const mockApiList: ApiItem[] = [
     updateTime: '2024-01-02',
     docUrl: '',
     rating: 4.9,
-    callCount: 89560,
+    invokeCount: 89560,
     successCount: 89000,
     failCount: 560
   },
@@ -218,7 +218,7 @@ const mockApiList: ApiItem[] = [
     updateTime: '2024-01-03',
     docUrl: '',
     rating: 4.7,
-    callCount: 256780,
+    invokeCount: 256780,
     successCount: 255000,
     failCount: 1780
   },
@@ -242,7 +242,7 @@ const mockApiList: ApiItem[] = [
     updateTime: '2024-01-04',
     docUrl: '',
     rating: 4.6,
-    callCount: 67890,
+    invokeCount: 67890,
     successCount: 67000,
     failCount: 890
   }

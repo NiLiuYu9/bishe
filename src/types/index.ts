@@ -4,11 +4,10 @@ export * from './trade'
 export * from './test'
 export * from './requirement'
 
-export interface Category {
+export interface ApiType {
   id: number
   name: string
   description: string
-  apiCount: number
 }
 
 export interface User {
@@ -32,7 +31,7 @@ export interface PlatformStatistics {
   apiCallRanking: {
     apiId: number
     apiName: string
-    callCount: number
+    invokeCount: number
   }[]
   dailyStats: {
     date: string

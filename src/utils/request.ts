@@ -6,15 +6,12 @@ import { ElMessage } from 'element-plus'
 const instance: AxiosInstance = axios.create({
   baseURL: config.baseURL,
   timeout: config.timeout,
-  headers: config.headers
+  headers: config.headers,
+  withCredentials: true
 })
 
 instance.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
-    const token = localStorage.getItem('token')
-    if (token && config.headers) {
-      config.headers.Authorization = `Bearer ${token}`
-    }
     return config
   },
   (error) => {
@@ -36,7 +33,7 @@ instance.interceptors.response.use(
       switch (error.response.status) {
         case 401:
           ElMessage.error('登录已过期，请重新登录')
-          localStorage.removeItem('token')
+          localStorage.removeItem('userInfo')
           window.location.href = '/login'
           break
         case 403:

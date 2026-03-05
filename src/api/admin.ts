@@ -1,9 +1,9 @@
 import { request, apiEndpoints } from '@/utils/request'
-import type { User, ApiItem, Category, Order, PlatformStatistics } from '@/types'
+import type { User, ApiItem, ApiType, Order, PlatformStatistics } from '@/types'
 
 export const adminApi = {
   getUsers(params: { page: number; pageSize: number; keyword?: string }) {
-    return request.get<{ list: User[]; total: number }>(apiEndpoints.admin.users, params)
+    return request.get<{ records: User[]; total: number }>(apiEndpoints.admin.users, params)
   },
 
   getUserDetail(id: string | number) {
@@ -22,20 +22,20 @@ export const adminApi = {
     return request.post(`${apiEndpoints.admin.auditApi}/${id}`, data)
   },
 
-  getCategories() {
-    return request.get<Category[]>(apiEndpoints.admin.categories)
+  getApiTypes() {
+    return request.get<ApiType[]>(apiEndpoints.admin.apiTypes)
   },
 
-  createCategory(data: { name: string; description: string }) {
-    return request.post<Category>(apiEndpoints.admin.categories, data)
+  createApiType(data: { name: string; description: string }) {
+    return request.post<ApiType>(apiEndpoints.admin.createApiType, data)
   },
 
-  updateCategory(id: string | number, data: Partial<{ name: string; description: string }>) {
-    return request.put(`${apiEndpoints.admin.categories}/${id}`, data)
+  updateApiType(id: string | number, data: Partial<{ name: string; description: string }>) {
+    return request.post(`${apiEndpoints.admin.updateApiType}?id=${id}`, data)
   },
 
-  deleteCategory(id: string | number) {
-    return request.delete(`${apiEndpoints.admin.categories}/${id}`)
+  deleteApiType(id: string | number) {
+    return request.post(`${apiEndpoints.admin.deleteApiType}?id=${id}`)
   },
 
   getOrders(params: { page: number; pageSize: number; status?: string }) {

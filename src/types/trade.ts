@@ -8,7 +8,7 @@ export interface Order {
   sellerId: number
   sellerName: string
   packageType: 'basic' | 'standard' | 'premium' | 'unlimited'
-  callCount: number
+  invokeCount: number
   price: number
   status: 'pending' | 'paid' | 'completed' | 'refunded' | 'cancelled'
   createTime: string
@@ -19,7 +19,7 @@ export interface Order {
 export interface OrderCreateParams {
   apiId: number
   packageType: 'basic' | 'standard' | 'premium' | 'unlimited'
-  callCount: number
+  invokeCount: number
 }
 
 export interface EvaluateParams {

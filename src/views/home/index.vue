@@ -73,7 +73,7 @@
           <h3 class="api-name">{{ api.name }}</h3>
           <p class="api-desc">{{ api.description }}</p>
           <div class="api-stats">
-            <span><el-icon><View /></el-icon> {{ api.callCount }} 次调用</span>
+            <span><el-icon><View /></el-icon> {{ api.invokeCount }} 次调用</span>
             <span><el-icon><Star /></el-icon> {{ api.rating }}</span>
           </div>
           <div class="api-footer">
@@ -165,7 +165,7 @@ const featuredApis = ref([
     category: '数据查询',
     price: 0.01,
     priceUnit: 'per_call',
-    callCount: 125680,
+    invokeCount: 125680,
     rating: 4.8
   },
   {
@@ -176,7 +176,7 @@ const featuredApis = ref([
     category: '图像识别',
     price: 0.05,
     priceUnit: 'per_call',
-    callCount: 89560,
+    invokeCount: 89560,
     rating: 4.9
   },
   {
@@ -187,7 +187,7 @@ const featuredApis = ref([
     category: '通信服务',
     price: 0.04,
     priceUnit: 'per_call',
-    callCount: 256780,
+    invokeCount: 256780,
     rating: 4.7
   },
   {
@@ -198,7 +198,7 @@ const featuredApis = ref([
     category: '位置服务',
     price: 0.02,
     priceUnit: 'per_call',
-    callCount: 67890,
+    invokeCount: 67890,
     rating: 4.6
   }
 ])

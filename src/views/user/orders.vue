@@ -27,7 +27,7 @@
             <div class="api-info">
               <h4>{{ order.apiName }}</h4>
               <p>套餐: {{ getPackageName(order.packageType) }}</p>
-              <p>调用次数: {{ order.callCount === -1 ? '无限' : order.callCount }}次</p>
+              <p>调用次数: {{ order.invokeCount === -1 ? '无限' : order.invokeCount }}次</p>
             </div>
             <div class="price-info">
               <span class="label">订单金额</span>
@@ -129,7 +129,7 @@ const mockOrders: Order[] = [
     sellerId: 2,
     sellerName: 'developer1',
     packageType: 'standard',
-    callCount: 500,
+    invokeCount: 500,
     price: 45,
     status: 'completed',
     createTime: '2024-01-01 10:30:00',
@@ -146,7 +146,7 @@ const mockOrders: Order[] = [
     sellerId: 3,
     sellerName: 'developer2',
     packageType: 'basic',
-    callCount: 100,
+    invokeCount: 100,
     price: 10,
     status: 'pending',
     createTime: '2024-01-02 14:20:00',

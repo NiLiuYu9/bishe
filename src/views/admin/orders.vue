@@ -68,7 +68,7 @@
         <el-descriptions-item label="套餐">{{ getPackageName(currentOrder?.packageType || '') }}</el-descriptions-item>
         <el-descriptions-item label="买家">{{ currentOrder?.buyerName }}</el-descriptions-item>
         <el-descriptions-item label="卖家">{{ currentOrder?.sellerName }}</el-descriptions-item>
-        <el-descriptions-item label="调用次数">{{ currentOrder?.callCount === -1 ? '无限' : currentOrder?.callCount }}</el-descriptions-item>
+        <el-descriptions-item label="调用次数">{{ currentOrder?.invokeCount === -1 ? '无限' : currentOrder?.invokeCount }}</el-descriptions-item>
         <el-descriptions-item label="金额">¥{{ currentOrder?.price }}</el-descriptions-item>
         <el-descriptions-item label="创建时间">{{ currentOrder?.createTime }}</el-descriptions-item>
         <el-descriptions-item label="支付时间">{{ currentOrder?.payTime || '-' }}</el-descriptions-item>
@@ -111,7 +111,7 @@ const mockOrders: Order[] = [
     sellerId: 2,
     sellerName: 'developer1',
     packageType: 'standard',
-    callCount: 500,
+    invokeCount: 500,
     price: 45,
     status: 'completed',
     createTime: '2024-01-18 10:30:00',
@@ -128,7 +128,7 @@ const mockOrders: Order[] = [
     sellerId: 3,
     sellerName: 'developer2',
     packageType: 'basic',
-    callCount: 100,
+    invokeCount: 100,
     price: 10,
     status: 'pending',
     createTime: '2024-01-18 14:20:00',
@@ -179,7 +179,7 @@ const refundOrder = async (order: Order) => {
     ElMessage.success('退款成功')
     fetchOrders()
   } catch (error) {
-    console.error('退款失败:', error)
+    console.error('退款失败', error)
   }
 }
 

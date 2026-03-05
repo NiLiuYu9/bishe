@@ -26,7 +26,7 @@
         <div class="api-meta">
           <span><el-icon><User /></el-icon> {{ api.username }}</span>
           <span><el-icon><Folder /></el-icon> {{ api.category }}</span>
-          <span><el-icon><View /></el-icon> {{ api.callCount }} 次调用</span>
+          <span><el-icon><View /></el-icon> {{ api.invokeCount }} 次调用</span>
           <span><el-icon><Star /></el-icon> {{ api.rating }} 评分</span>
         </div>
         
@@ -117,9 +117,9 @@
       <el-form :model="purchaseForm" label-width="100px">
         <el-form-item label="选择套餐">
           <el-radio-group v-model="purchaseForm.packageType">
-            <el-radio label="basic">基础版 (100次)</el-radio>
-            <el-radio label="standard">标准版 (500次)</el-radio>
-            <el-radio label="premium">专业版 (2000次)</el-radio>
+            <el-radio label="basic">基础版(100次)</el-radio>
+            <el-radio label="standard">标准版(500次)</el-radio>
+            <el-radio label="premium">专业版(2000次)</el-radio>
             <el-radio label="unlimited">无限版</el-radio>
           </el-radio-group>
         </el-form-item>
@@ -180,7 +180,7 @@ const api = ref<ApiItem>({
   updateTime: '',
   docUrl: '',
   rating: 0,
-  callCount: 0,
+  invokeCount: 0,
   successCount: 0,
   failCount: 0
 })
@@ -210,7 +210,7 @@ const reviews = ref([
     id: 2,
     username: '用户B',
     rating: 4,
-    content: '功能满足需求，文档清晰，推荐使用。',
+    content: '功能满足需求，文档清晰，推荐使用！',
     reply: '',
     createTime: '2024-01-10'
   }
@@ -261,7 +261,7 @@ const fetchApiDetail = async () => {
       updateTime: '2024-01-01',
       docUrl: '',
       rating: 4.8,
-      callCount: 125680,
+      invokeCount: 125680,
       successCount: 125000,
       failCount: 680
     }
@@ -284,7 +284,7 @@ const handlePurchase = async () => {
     await tradeApi.purchase({
       apiId: api.value.id,
       packageType: purchaseForm.packageType as any,
-      callCount: purchaseForm.packageType === 'unlimited' ? -1 : 
+      invokeCount: purchaseForm.packageType === 'unlimited' ? -1 : 
         purchaseForm.packageType === 'basic' ? 100 :
         purchaseForm.packageType === 'standard' ? 500 : 2000
     })

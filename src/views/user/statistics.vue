@@ -23,7 +23,7 @@
           <el-icon :size="24" style="color: #1E40AF;"><View /></el-icon>
         </div>
         <div class="stat-info">
-          <span class="stat-value">{{ statistics.callCount }}</span>
+          <span class="stat-value">{{ statistics.invokeCount }}</span>
           <span class="stat-label">总调用次数</span>
         </div>
       </div>
@@ -93,15 +93,15 @@ const myApis = ref([
 ])
 
 const statistics = ref({
-  callCount: 125680,
+  invokeCount: 125680,
   successCount: 125000,
   failCount: 680,
-  dailyStats: [] as { date: string; callCount: number; successCount: number; failCount: number }[]
+  dailyStats: [] as { date: string; invokeCount: number; successCount: number; failCount: number }[]
 })
 
 const successRate = computed(() => {
-  if (statistics.value.callCount === 0) return 0
-  return ((statistics.value.successCount / statistics.value.callCount) * 100).toFixed(2)
+  if (statistics.value.invokeCount === 0) return 0
+  return ((statistics.value.successCount / statistics.value.invokeCount) * 100).toFixed(2)
 })
 
 const fetchStatistics = async () => {
@@ -116,7 +116,7 @@ const fetchStatistics = async () => {
   } catch (error) {
     console.error('获取统计数据失败:', error)
     statistics.value = {
-      callCount: 125680,
+      invokeCount: 125680,
       successCount: 125000,
       failCount: 680,
       dailyStats: generateMockDailyStats()
@@ -131,7 +131,7 @@ const generateMockDailyStats = () => {
     const date = new Date(Date.now() - i * 24 * 60 * 60 * 1000)
     stats.push({
       date: date.toLocaleDateString(),
-      callCount: Math.floor(Math.random() * 1000) + 500,
+      invokeCount: Math.floor(Math.random() * 1000) + 500,
       successCount: Math.floor(Math.random() * 900) + 450,
       failCount: Math.floor(Math.random() * 50) + 10
     })
@@ -166,7 +166,7 @@ const updateCharts = () => {
         name: '调用次数',
         type: 'line',
         smooth: true,
-        data: dailyStats.map(s => s.callCount),
+        data: dailyStats.map(s => s.invokeCount),
         itemStyle: { color: '#1E40AF' }
       },
       {

@@ -31,7 +31,7 @@
             </el-input>
             
             <template v-if="userStore.isLoggedIn">
-              <el-dropdown trigger="click">
+              <el-dropdown trigger="click" @command="handleCommand">
                 <div class="user-info">
                   <el-avatar :size="32" :src="userStore.userInfo?.avatar">
                     {{ userStore.userInfo?.username?.charAt(0).toUpperCase() }}
@@ -40,19 +40,22 @@
                 </div>
                 <template #dropdown>
                   <el-dropdown-menu>
-                    <el-dropdown-item @click="router.push('/user/my-apis')">
+                    <el-dropdown-item command="/user/my-apis">
                       <el-icon><Box /></el-icon>我的API
                     </el-dropdown-item>
-                    <el-dropdown-item @click="router.push('/user/orders')">
+                    <el-dropdown-item command="/user/orders">
                       <el-icon><List /></el-icon>我的订单
                     </el-dropdown-item>
-                    <el-dropdown-item @click="router.push('/user/my-requirements')">
+                    <el-dropdown-item command="/user/my-requirements">
                       <el-icon><Document /></el-icon>我的需求
                     </el-dropdown-item>
-                    <el-dropdown-item @click="router.push('/user/statistics')">
+                    <el-dropdown-item command="/user/statistics">
                       <el-icon><DataLine /></el-icon>统计分析
                     </el-dropdown-item>
-                    <el-dropdown-item divided @click="handleLogout">
+                    <el-dropdown-item command="/admin" divided>
+                      <el-icon><Setting /></el-icon>管理后台
+                    </el-dropdown-item>
+                    <el-dropdown-item command="logout" divided>
                       <el-icon><SwitchButton /></el-icon>退出登录
                     </el-dropdown-item>
                   </el-dropdown-menu>
@@ -92,7 +95,7 @@
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useUserStore } from '@/stores/user'
-import { Search, Box, List, Document, DataLine, SwitchButton } from '@element-plus/icons-vue'
+import { Search, Box, List, Document, DataLine, SwitchButton, Setting } from '@element-plus/icons-vue'
 
 const router = useRouter()
 const userStore = useUserStore()
@@ -105,9 +108,13 @@ const handleSearch = () => {
   }
 }
 
-const handleLogout = async () => {
-  await userStore.logout()
-  router.push('/')
+const handleCommand = (command: string) => {
+  if (command === 'logout') {
+    userStore.logout()
+    router.push('/')
+  } else {
+    router.push(command)
+  }
 }
 </script>
 

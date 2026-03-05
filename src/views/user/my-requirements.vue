@@ -36,7 +36,7 @@
           </div>
           
           <div class="req-footer">
-            <span class="time">发布于 {{ req.createTime }}</span>
+            <span class="time">发布于: {{ req.createTime }}</span>
             <div class="actions">
               <el-button text type="primary" @click="viewDetail(req)">查看详情</el-button>
               <el-button v-if="activeTab === 'published'" text type="primary" @click="editRequirement(req)">编辑</el-button>

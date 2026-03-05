@@ -155,7 +155,7 @@ const fetchRequirement = async () => {
     const res = await requirementApi.getList({ page: 1, pageSize: 1 })
     requirement.value = res.data.list.find(r => r.id === Number(id)) || mockRequirement
   } catch (error) {
-    console.error('获取需求详情失败:', error)
+    console.error('获取需求详情失败', error)
     requirement.value = mockRequirement
   } finally {
     loading.value = false

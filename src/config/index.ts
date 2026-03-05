@@ -11,8 +11,9 @@ export const apiEndpoints = {
     register: '/auth/register',
     login: '/auth/login',
     logout: '/auth/logout',
-    userInfo: '/auth/user-info',
-    refreshToken: '/auth/refresh-token'
+    userInfo: '/auth/userInfo',
+    updateUserInfo: '/auth/updateUserInfo',
+    updatePassword: '/auth/updatePassword'
   },
   api: {
     list: '/api/list',
@@ -49,7 +50,10 @@ export const apiEndpoints = {
     freezeUser: '/admin/freeze-user',
     apis: '/admin/apis',
     auditApi: '/admin/audit-api',
-    categories: '/admin/categories',
+    apiTypes: '/admin/APITypes',
+    createApiType: '/admin/APITypes/create',
+    updateApiType: '/admin/APITypes/update',
+    deleteApiType: '/admin/APITypes/delete',
     orders: '/admin/orders',
     statistics: '/admin/statistics'
   }

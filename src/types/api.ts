@@ -18,7 +18,7 @@ export interface ApiItem {
   updateTime: string
   docUrl: string
   rating: number
-  callCount: number
+  invokeCount: number
   successCount: number
   failCount: number
 }
@@ -51,17 +51,17 @@ export interface ApiListParams {
   keyword?: string
   categoryId?: number
   status?: string
-  sortBy?: 'price' | 'rating' | 'callCount'
+  sortBy?: 'price' | 'rating' | 'invokeCount'
   sortOrder?: 'asc' | 'desc'
 }
 
 export interface ApiStatistics {
-  callCount: number
+  invokeCount: number
   successCount: number
   failCount: number
   dailyStats: {
     date: string
-    callCount: number
+    invokeCount: number
     successCount: number
     failCount: number
   }[]

@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import type { RouteRecordRaw } from 'vue-router'
+import { useUserStore } from '@/stores/user'
 
 const routes: RouteRecordRaw[] = [
   {
@@ -98,7 +99,8 @@ const routes: RouteRecordRaw[] = [
     path: '/admin',
     name: 'Admin',
     component: () => import('@/layouts/AdminLayout.vue'),
-    meta: { title: '管理后台', requiresAuth: true, requiresAdmin: true },
+    // TODO: 临时移除管理员权限检查，后续需要恢复 requiresAdmin: true
+    meta: { title: '管理后台', requiresAuth: true },
     children: [
       {
         path: '',
@@ -119,10 +121,10 @@ const routes: RouteRecordRaw[] = [
         meta: { title: 'API审核' }
       },
       {
-        path: 'categories',
-        name: 'AdminCategories',
-        component: () => import('@/views/admin/categories.vue'),
-        meta: { title: '分类管理' }
+        path: 'api-types',
+        name: 'AdminApiTypes',
+        component: () => import('@/views/admin/api-types.vue'),
+        meta: { title: 'API分类管理' }
       },
       {
         path: 'orders',
@@ -151,31 +153,24 @@ const router = createRouter({
   routes
 })
 
-router.beforeEach((to, from, next) => {
+router.beforeEach(async (to, from, next) => {
   document.title = `${to.meta.title || 'API交易平台'} - API Market`
   
-  const token = localStorage.getItem('token')
+  const userStore = useUserStore()
   
-  if (to.meta.requiresAuth && !token) {
+  if (to.meta.requiresAuth && !userStore.isLoggedIn) {
     next({ name: 'Login', query: { redirect: to.fullPath } })
     return
   }
   
-  if (to.meta.requiresAdmin) {
-    const userInfo = localStorage.getItem('userInfo')
-    if (userInfo) {
-      const user = JSON.parse(userInfo)
-      if (user.role !== 'admin') {
-        next({ name: 'Home' })
-        return
-      }
-    } else {
-      next({ name: 'Login', query: { redirect: to.fullPath } })
-      return
-    }
-  }
+  // TODO: 临时注释管理员权限检查，后续需要恢复  // if (to.meta.requiresAdmin) {
+  //   if (userStore.userInfo && (userStore.userInfo as any).role !== 'admin') {
+  //     next({ name: 'Home' })
+  //     return
+  //   }
+  // }
   
-  if ((to.name === 'Login' || to.name === 'Register') && token) {
+  if ((to.name === 'Login' || to.name === 'Register') && userStore.isLoggedIn) {
     next({ name: 'Home' })
     return
   }

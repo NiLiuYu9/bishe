@@ -29,9 +29,9 @@
             <el-icon><Box /></el-icon>
             <span>API审核</span>
           </el-menu-item>
-          <el-menu-item index="/admin/categories">
+          <el-menu-item index="/admin/api-types">
             <el-icon><Grid /></el-icon>
-            <span>分类管理</span>
+            <span>API分类管理</span>
           </el-menu-item>
           <el-menu-item index="/admin/orders">
             <el-icon><List /></el-icon>
