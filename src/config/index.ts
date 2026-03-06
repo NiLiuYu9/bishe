@@ -47,13 +47,14 @@ export const apiEndpoints = {
   admin: {
     users: '/admin/users',
     userDetail: '/admin/user-detail',
-    freezeUser: '/admin/freeze-user',
+    freezeUser: '/admin/users',
+    unfreezeUser: '/admin/users',
     apis: '/admin/apis',
     auditApi: '/admin/audit-api',
-    apiTypes: '/admin/APITypes',
-    createApiType: '/admin/APITypes/create',
-    updateApiType: '/admin/APITypes/update',
-    deleteApiType: '/admin/APITypes/delete',
+    apiTypes: '/admin/api-types',
+    createApiType: '/admin/api-types',
+    updateApiType: '/admin/api-types',
+    deleteApiType: '/admin/api-types',
     orders: '/admin/orders',
     statistics: '/admin/statistics'
   }

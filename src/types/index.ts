@@ -16,7 +16,8 @@ export interface User {
   email: string
   phone: string
   avatar: string
-  status: 'active' | 'frozen'
+  status: number
+  freezeReason: string
   createTime: string
   role: 'user' | 'admin'
 }

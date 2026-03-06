@@ -2,7 +2,7 @@ import { request, apiEndpoints } from '@/utils/request'
 import type { User, ApiItem, ApiType, Order, PlatformStatistics } from '@/types'
 
 export const adminApi = {
-  getUsers(params: { page: number; pageSize: number; keyword?: string }) {
+  getUsers(params: { pageNum: number; pageSize: number; username?: string; status?: number }) {
     return request.get<{ records: User[]; total: number }>(apiEndpoints.admin.users, params)
   },
 
@@ -11,7 +11,11 @@ export const adminApi = {
   },
 
   freezeUser(id: string | number, data: { reason: string }) {
-    return request.post(`${apiEndpoints.admin.freezeUser}/${id}`, data)
+    return request.put(`${apiEndpoints.admin.freezeUser}/${id}/freeze`, data)
+  },
+
+  unfreezeUser(id: string | number) {
+    return request.put(`${apiEndpoints.admin.unfreezeUser}/${id}/unfreeze`)
   },
 
   getApis(params: { page: number; pageSize: number; status?: string }) {
@@ -31,11 +35,11 @@ export const adminApi = {
   },
 
   updateApiType(id: string | number, data: Partial<{ name: string; description: string }>) {
-    return request.post(`${apiEndpoints.admin.updateApiType}?id=${id}`, data)
+    return request.put(`${apiEndpoints.admin.updateApiType}/${id}`, data)
   },
 
   deleteApiType(id: string | number) {
-    return request.post(`${apiEndpoints.admin.deleteApiType}?id=${id}`)
+    return request.delete(`${apiEndpoints.admin.deleteApiType}/${id}`)
   },
 
   getOrders(params: { page: number; pageSize: number; status?: string }) {

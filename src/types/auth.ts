@@ -1,12 +1,11 @@
 export interface UserInfo {
   id: number
   username: string
-  nickname?: string
   email?: string
   phone?: string
   avatar?: string
   createTime?: string
-  status?: 'active' | 'frozen'
+  status?: number
 }
 
 export interface LoginParams {

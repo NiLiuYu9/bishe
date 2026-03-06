@@ -1,5 +1,5 @@
 import { request, apiEndpoints } from '@/utils/request'
-import type { ApiItem, ApiCreateParams, ApiListParams, ApiStatistics } from '@/types/api'
+import type { ApiItem, ApiCreateParams, ApiListParams, ApiStatistics, ApiType } from '@/types/api'
 
 export const apiManagement = {
   getList(params: ApiListParams) {
@@ -23,7 +23,7 @@ export const apiManagement = {
   },
 
   getMyApis(params: ApiListParams) {
-    return request.get<{ list: ApiItem[]; total: number }>(apiEndpoints.api.myApis, params)
+    return request.get<{ records: ApiItem[]; total: number }>(apiEndpoints.api.myApis, params)
   },
 
   submitAudit(id: string | number) {
@@ -32,5 +32,9 @@ export const apiManagement = {
 
   getStatistics(id: string | number, params: { startDate: string; endDate: string }) {
     return request.get<ApiStatistics>(`${apiEndpoints.api.statistics}/${id}`, params)
+  },
+
+  getTypes() {
+    return request.get<ApiType[]>(apiEndpoints.admin.apiTypes)
   }
 }

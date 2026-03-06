@@ -12,13 +12,13 @@
         <el-form-item label="关键词">
           <el-input v-model="filters.keyword" placeholder="搜索API" clearable @keyup.enter="handleSearch" />
         </el-form-item>
-        <el-form-item label="分类">
-          <el-select v-model="filters.categoryId" placeholder="全部分类" clearable>
+        <el-form-item label="类型">
+          <el-select v-model="filters.typeId" placeholder="全部类型" clearable>
             <el-option
-              v-for="cat in categories"
-              :key="cat.id"
-              :label="cat.name"
-              :value="cat.id"
+              v-for="type in types"
+              :key="type.id"
+              :label="type.name"
+              :value="type.id"
             />
           </el-select>
         </el-form-item>
@@ -52,7 +52,7 @@
         >
           <div class="api-header">
             <el-tag :type="getMethodType(api.method)">{{ api.method }}</el-tag>
-            <span class="api-category">{{ api.category }}</span>
+            <span class="api-type-name">{{ api.typeName }}</span>
           </div>
           <h3 class="api-name">{{ api.name }}</h3>
           <p class="api-desc">{{ api.description }}</p>
@@ -97,7 +97,7 @@ import { useRouter, useRoute } from 'vue-router'
 import { Plus, View, Star } from '@element-plus/icons-vue'
 import { useUserStore } from '@/stores/user'
 import { apiManagement } from '@/api/api'
-import type { ApiItem } from '@/types/api'
+import type { ApiItem, ApiType } from '@/types/api'
 
 const router = useRouter()
 const route = useRoute()
@@ -107,18 +107,11 @@ const loading = ref(false)
 const apiList = ref<ApiItem[]>([])
 const total = ref(0)
 
-const categories = ref([
-  { id: 1, name: '数据查询' },
-  { id: 2, name: '文档处理' },
-  { id: 3, name: '图像识别' },
-  { id: 4, name: '位置服务' },
-  { id: 5, name: '支付服务' },
-  { id: 6, name: '通信服务' }
-])
+const types = ref<ApiType[]>([])
 
 const filters = reactive({
   keyword: '',
-  categoryId: '',
+  typeId: '',
   sortBy: ''
 })
 
@@ -127,6 +120,23 @@ const pagination = reactive({
   pageSize: 12
 })
 
+const fetchTypes = async () => {
+  try {
+    const res = await apiManagement.getTypes()
+    types.value = res.data
+  } catch (error) {
+    console.error('获取类型列表失败:', error)
+    types.value = [
+      { id: 1, name: '数据查询', description: '' },
+      { id: 2, name: '文档处理', description: '' },
+      { id: 3, name: '图像识别', description: '' },
+      { id: 4, name: '位置服务', description: '' },
+      { id: 5, name: '支付服务', description: '' },
+      { id: 6, name: '通信服务', description: '' }
+    ]
+  }
+}
+
 const fetchApiList = async () => {
   loading.value = true
   try {
@@ -134,7 +144,7 @@ const fetchApiList = async () => {
       page: pagination.page,
       pageSize: pagination.pageSize,
       keyword: filters.keyword,
-      categoryId: filters.categoryId ? Number(filters.categoryId) : undefined,
+      typeId: filters.typeId ? Number(filters.typeId) : undefined,
       sortBy: filters.sortBy.split('_')[0] as any,
       sortOrder: filters.sortBy.split('_')[1] as any
     })
@@ -154,8 +164,8 @@ const mockApiList: ApiItem[] = [
     id: 1,
     name: '天气查询API',
     description: '支持全国城市天气查询，实时天气、未来天气预报，数据准确可靠',
-    category: '数据查询',
-    categoryId: 1,
+    typeName: '数据查询',
+    typeId: 1,
     userId: 1,
     username: 'developer1',
     method: 'GET',
@@ -178,8 +188,8 @@ const mockApiList: ApiItem[] = [
     id: 2,
     name: '身份证OCR识别',
     description: '高精度身份证识别，支持正反面识别，识别率99.9%',
-    category: '图像识别',
-    categoryId: 3,
+    typeName: '图像识别',
+    typeId: 3,
     userId: 2,
     username: 'developer2',
     method: 'POST',
@@ -202,8 +212,8 @@ const mockApiList: ApiItem[] = [
     id: 3,
     name: '短信验证码',
     description: '支持三大运营商，到达率99.9%，支持国际短信',
-    category: '通信服务',
-    categoryId: 6,
+    typeName: '通信服务',
+    typeId: 6,
     userId: 3,
     username: 'developer3',
     method: 'POST',
@@ -226,8 +236,8 @@ const mockApiList: ApiItem[] = [
     id: 4,
     name: '地图逆地理编码',
     description: '经纬度转换为详细地址信息，支持全球地址解析',
-    category: '位置服务',
-    categoryId: 4,
+    typeName: '位置服务',
+    typeId: 4,
     userId: 4,
     username: 'developer4',
     method: 'GET',
@@ -255,7 +265,7 @@ const handleSearch = () => {
 
 const resetFilters = () => {
   filters.keyword = ''
-  filters.categoryId = ''
+  filters.typeId = ''
   filters.sortBy = ''
   pagination.page = 1
   fetchApiList()
@@ -301,9 +311,10 @@ onMounted(() => {
   if (route.query.keyword) {
     filters.keyword = route.query.keyword as string
   }
-  if (route.query.categoryId) {
-    filters.categoryId = route.query.categoryId as string
+  if (route.query.typeId) {
+    filters.typeId = route.query.typeId as string
   }
+  fetchTypes()
   fetchApiList()
 })
 </script>
@@ -355,7 +366,7 @@ onMounted(() => {
   margin-bottom: 12px;
 }
 
-.api-category {
+.api-type-name {
   font-size: 12px;
   color: #475569;
 }

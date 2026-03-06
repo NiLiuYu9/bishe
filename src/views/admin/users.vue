@@ -9,13 +9,13 @@
     
     <div class="filter-section card">
       <el-form :inline="true" :model="filters">
-        <el-form-item label="关键词">
-          <el-input v-model="filters.keyword" placeholder="用户名/邮箱/手机号" clearable />
+        <el-form-item label="用户名">
+          <el-input v-model="filters.username" placeholder="用户名" clearable />
         </el-form-item>
         <el-form-item label="状态">
-          <el-select v-model="filters.status" placeholder="全部状态" clearable>
-            <el-option label="正常" value="active" />
-            <el-option label="冻结" value="frozen" />
+          <el-select v-model="filters.status" placeholder="全部状态" clearable style="width: 120px">
+            <el-option label="正常" :value="1" />
+            <el-option label="冻结" :value="0" />
           </el-select>
         </el-form-item>
         <el-form-item>
@@ -33,9 +33,15 @@
         <el-table-column prop="phone" label="手机号" />
         <el-table-column prop="status" label="状态" width="100">
           <template #default="{ row }">
-            <el-tag :type="row.status === 'active' ? 'success' : 'danger'">
-              {{ row.status === 'active' ? '正常' : '冻结' }}
+            <el-tag :type="row.status === 1 ? 'success' : 'danger'">
+              {{ row.status === 1 ? '正常' : '冻结' }}
             </el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column label="冻结原因">
+          <template #default="{ row }">
+            <span v-if="row.status === 0">{{ row.freezeReason || '无' }}</span>
+            <span v-else style="color: #999;">-</span>
           </template>
         </el-table-column>
         <el-table-column prop="createTime" label="注册时间" />
@@ -43,7 +49,7 @@
           <template #default="{ row }">
             <el-button text type="primary" @click="viewUser(row)">查看</el-button>
             <el-button 
-              v-if="row.status === 'active'" 
+              v-if="row.status === 1" 
               text 
               type="warning" 
               @click="freezeUser(row)"
@@ -51,7 +57,7 @@
               冻结
             </el-button>
             <el-button 
-              v-if="row.status === 'frozen'" 
+              v-if="row.status === 0" 
               text 
               type="success" 
               @click="unfreezeUser(row)"
@@ -79,9 +85,12 @@
         <el-descriptions-item label="邮箱">{{ currentUser?.email }}</el-descriptions-item>
         <el-descriptions-item label="手机号">{{ currentUser?.phone }}</el-descriptions-item>
         <el-descriptions-item label="状态">
-          <el-tag :type="currentUser?.status === 'active' ? 'success' : 'danger'">
-            {{ currentUser?.status === 'active' ? '正常' : '冻结' }}
+          <el-tag :type="currentUser?.status === 1 ? 'success' : 'danger'">
+            {{ currentUser?.status === 1 ? '正常' : '冻结' }}
           </el-tag>
+        </el-descriptions-item>
+        <el-descriptions-item v-if="currentUser?.status === 0" label="冻结原因">
+          {{ currentUser?.freezeReason || '无' }}
         </el-descriptions-item>
         <el-descriptions-item label="注册时间">{{ currentUser?.createTime }}</el-descriptions-item>
       </el-descriptions>
@@ -117,8 +126,8 @@ const freezeDialogVisible = ref(false)
 const currentUser = ref<User | null>(null)
 
 const filters = reactive({
-  keyword: '',
-  status: ''
+  username: '',
+  status: null as number | null
 })
 
 const pagination = reactive({
@@ -128,27 +137,21 @@ const pagination = reactive({
 
 const freezeForm = reactive({ reason: '' })
 
-const mockUsers: User[] = [
-  { id: 1, username: 'user1', email: 'user1@example.com', phone: '13800138001', status: 'active', createTime: '2024-01-01', role: 'user' },
-  { id: 2, username: 'user2', email: 'user2@example.com', phone: '13800138002', status: 'active', createTime: '2024-01-02', role: 'user' },
-  { id: 3, username: 'developer1', email: 'dev1@example.com', phone: '13800138003', status: 'active', createTime: '2024-01-03', role: 'user' },
-  { id: 4, username: 'frozen_user', email: 'frozen@example.com', phone: '13800138004', status: 'frozen', createTime: '2024-01-04', role: 'user' }
-]
-
 const fetchUsers = async () => {
   loading.value = true
   try {
-    const res = await adminApi.getUsers({
-      page: pagination.page,
+    const params: { pageNum: number; pageSize: number; username?: string; status?: number } = {
+      pageNum: pagination.page,
       pageSize: pagination.pageSize,
-      keyword: filters.keyword
-    })
+      username: filters.username || undefined,
+      status: filters.status ?? undefined
+    }
+    const res = await adminApi.getUsers(params)
     users.value = res.data.records
     total.value = res.data.total
   } catch (error) {
     console.error('获取用户列表失败:', error)
-    users.value = mockUsers
-    total.value = mockUsers.length
+    ElMessage.error('获取用户列表失败')
   } finally {
     loading.value = false
   }
@@ -160,8 +163,8 @@ const handleSearch = () => {
 }
 
 const resetFilters = () => {
-  filters.keyword = ''
-  filters.status = ''
+  filters.username = ''
+  filters.status = null
   pagination.page = 1
   fetchUsers()
 }
@@ -187,20 +190,18 @@ const confirmFreeze = async () => {
     fetchUsers()
   } catch (error) {
     console.error('冻结失败:', error)
-    ElMessage.success('冻结成功（模拟）')
-    freezeDialogVisible.value = false
+    ElMessage.error('冻结失败')
   }
 }
 
 const unfreezeUser = async (user: User) => {
   try {
-    await adminApi.freezeUser(user.id, { reason: '' })
+    await adminApi.unfreezeUser(user.id)
     ElMessage.success('解冻成功')
     fetchUsers()
   } catch (error) {
     console.error('解冻失败:', error)
-    ElMessage.success('解冻成功（模拟）')
-    fetchUsers()
+    ElMessage.error('解冻失败')
   }
 }
 

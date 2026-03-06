@@ -2,8 +2,8 @@ export interface ApiItem {
   id: number
   name: string
   description: string
-  category: string
-  categoryId: number
+  typeName: string
+  typeId: number
   userId: number
   username: string
   method: 'GET' | 'POST' | 'PUT' | 'DELETE'
@@ -34,7 +34,7 @@ export interface ApiParam {
 export interface ApiCreateParams {
   name: string
   description: string
-  categoryId: number
+  typeId: number
   method: 'GET' | 'POST' | 'PUT' | 'DELETE'
   endpoint: string
   requestParams: ApiParam[]
@@ -46,10 +46,10 @@ export interface ApiCreateParams {
 }
 
 export interface ApiListParams {
-  page: number
+  pageNum: number
   pageSize: number
   keyword?: string
-  categoryId?: number
+  typeId?: number
   status?: string
   sortBy?: 'price' | 'rating' | 'invokeCount'
   sortOrder?: 'asc' | 'desc'
@@ -65,4 +65,10 @@ export interface ApiStatistics {
     successCount: number
     failCount: number
   }[]
+}
+
+export interface ApiType {
+  id: number
+  name: string
+  description: string
 }
