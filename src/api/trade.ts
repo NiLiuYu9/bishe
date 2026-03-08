@@ -7,11 +7,23 @@ export const tradeApi = {
   },
 
   getOrders(params: { page: number; pageSize: number; status?: string }) {
-    return request.get<{ list: Order[]; total: number }>(apiEndpoints.trade.orders, params)
+    return request.get<{ list: Order[]; total: number }>(apiEndpoints.trade.orders, {
+      pageNum: params.page,
+      pageSize: params.pageSize,
+      status: params.status
+    })
   },
 
   getOrderDetail(id: string | number) {
     return request.get<Order>(`${apiEndpoints.trade.orderDetail}/${id}`)
+  },
+
+  updateOrderStatus(id: string | number, status: string) {
+    return request.put<void>(`${apiEndpoints.trade.updateStatus}/${id}?status=${status}`)
+  },
+
+  deleteOrder(id: string | number) {
+    return request.delete<void>(`${apiEndpoints.trade.delete}/${id}`)
   },
 
   evaluate(data: EvaluateParams) {

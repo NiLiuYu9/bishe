@@ -2,7 +2,6 @@ export interface Requirement {
   id: number
   title: string
   description: string
-  tags: string[]
   requestParams: ParamDefinition[]
   responseParams: ParamDefinition[]
   budget: number
@@ -12,6 +11,7 @@ export interface Requirement {
   status: 'open' | 'in_progress' | 'completed' | 'cancelled'
   applicants: Applicant[]
   selectedApplicant?: Applicant
+  myApplyStatus?: 'pending' | 'accepted' | 'rejected'
   createTime: string
   updateTime: string
 }
@@ -19,7 +19,9 @@ export interface Requirement {
 export interface ParamDefinition {
   name: string
   type: string
+  required: boolean
   description: string
+  example: string
 }
 
 export interface Applicant {
@@ -34,7 +36,6 @@ export interface Applicant {
 export interface RequirementCreateParams {
   title: string
   description: string
-  tags: string[]
   requestParams: ParamDefinition[]
   responseParams: ParamDefinition[]
   budget: number
@@ -42,10 +43,9 @@ export interface RequirementCreateParams {
 }
 
 export interface RequirementListParams {
-  page: number
+  pageNum: number
   pageSize: number
   keyword?: string
-  tags?: string[]
   minBudget?: number
   maxBudget?: number
   status?: string

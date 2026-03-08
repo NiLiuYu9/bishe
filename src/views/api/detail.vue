@@ -74,18 +74,19 @@
             </el-table>
           </el-tab-pane>
           
-          <el-tab-pane label="价格套餐" name="price">
-            <div class="price-packages">
-              <div
-                v-for="pkg in pricePackages"
-                :key="pkg.type"
-                class="package-card"
-                :class="{ active: selectedPackage === pkg.type }"
-                @click="selectedPackage = pkg.type"
-              >
-                <h4>{{ pkg.name }}</h4>
-                <div class="price">{{ pkg.price }}</div>
-                <p>{{ pkg.description }}</p>
+          <el-tab-pane label="价格说明" name="price">
+            <div class="price-info-card">
+              <div class="price-header">
+                <span class="label">单价</span>
+                <span class="unit-price">¥{{ api.price }} / 次</span>
+              </div>
+              <div class="price-desc">
+                <p>按调用次数计费，购买次数越多越优惠</p>
+                <ul>
+                  <li>购买 100 次以上：9折优惠</li>
+                  <li>购买 500 次以上：8折优惠</li>
+                  <li>购买 2000 次以上：7折优惠</li>
+                </ul>
               </div>
             </div>
           </el-tab-pane>
@@ -115,16 +116,32 @@
     
     <el-dialog v-model="showPurchaseDialog" title="购买API调用次数" width="500px">
       <el-form :model="purchaseForm" label-width="100px">
-        <el-form-item label="选择套餐">
-          <el-radio-group v-model="purchaseForm.packageType">
-            <el-radio label="basic">基础版(100次)</el-radio>
-            <el-radio label="standard">标准版(500次)</el-radio>
-            <el-radio label="premium">专业版(2000次)</el-radio>
-            <el-radio label="unlimited">无限版</el-radio>
-          </el-radio-group>
+        <el-form-item label="API名称">
+          <span>{{ api.name }}</span>
         </el-form-item>
-        <el-form-item label="购买数量">
-          <el-input-number v-model="purchaseForm.quantity" :min="1" :max="10" />
+        <el-form-item label="单价">
+          <span>¥{{ api.price }} / 次</span>
+        </el-form-item>
+        <el-form-item label="购买次数">
+          <div class="count-options">
+            <el-radio-group v-model="purchaseForm.countOption" @change="handleCountOptionChange">
+              <el-radio label="100">100次</el-radio>
+              <el-radio label="500">500次</el-radio>
+              <el-radio label="2000">2000次</el-radio>
+              <el-radio label="custom">自定义</el-radio>
+            </el-radio-group>
+          </div>
+          <el-input-number
+            v-if="purchaseForm.countOption === 'custom'"
+            v-model="purchaseForm.invokeCount"
+            :min="1"
+            :max="100000"
+            :step="100"
+            class="custom-count-input"
+          />
+        </el-form-item>
+        <el-form-item label="优惠">
+          <span class="discount">{{ discountText }}</span>
         </el-form-item>
         <el-form-item label="支付金额">
           <span class="total-price">¥{{ calculateTotal }}</span>
@@ -157,7 +174,6 @@ const route = useRoute()
 const loading = ref(false)
 const activeTab = ref('request')
 const showPurchaseDialog = ref(false)
-const selectedPackage = ref('basic')
 const baseUrl = config.baseURL
 
 const api = ref<ApiItem>({
@@ -186,16 +202,9 @@ const api = ref<ApiItem>({
 })
 
 const purchaseForm = reactive({
-  packageType: 'basic',
-  quantity: 1
+  countOption: '100',
+  invokeCount: 100
 })
-
-const pricePackages = [
-  { type: 'basic', name: '基础版', price: '¥10', description: '100次调用' },
-  { type: 'standard', name: '标准版', price: '¥45', description: '500次调用' },
-  { type: 'premium', name: '专业版', price: '¥150', description: '2000次调用' },
-  { type: 'unlimited', name: '无限版', price: '¥500', description: '月度无限调用' }
-]
 
 const reviews = ref([
   {
@@ -216,15 +225,29 @@ const reviews = ref([
   }
 ])
 
-const calculateTotal = computed(() => {
-  const prices: Record<string, number> = {
-    basic: 10,
-    standard: 45,
-    premium: 150,
-    unlimited: 500
-  }
-  return prices[purchaseForm.packageType] * purchaseForm.quantity
+const getDiscount = (count: number): number => {
+  if (count >= 2000) return 0.7
+  if (count >= 500) return 0.8
+  if (count >= 100) return 0.9
+  return 1
+}
+
+const discountText = computed(() => {
+  const discount = getDiscount(purchaseForm.invokeCount)
+  if (discount === 1) return '无优惠'
+  return `${(discount * 10).toFixed(1)}折`
 })
+
+const calculateTotal = computed(() => {
+  const discount = getDiscount(purchaseForm.invokeCount)
+  return (api.value.price * purchaseForm.invokeCount * discount).toFixed(2)
+})
+
+const handleCountOptionChange = (value: string) => {
+  if (value !== 'custom') {
+    purchaseForm.invokeCount = parseInt(value)
+  }
+}
 
 const fetchApiDetail = async () => {
   const id = route.params.id as string
@@ -254,10 +277,7 @@ const handlePurchase = async () => {
   try {
     await tradeApi.purchase({
       apiId: api.value.id,
-      packageType: purchaseForm.packageType as any,
-      invokeCount: purchaseForm.packageType === 'unlimited' ? -1 : 
-        purchaseForm.packageType === 'basic' ? 100 :
-        purchaseForm.packageType === 'standard' ? 500 : 2000
+      invokeCount: purchaseForm.invokeCount
     })
     ElMessage.success('购买成功')
     showPurchaseDialog.value = false
@@ -370,44 +390,43 @@ onMounted(() => {
   padding: 24px;
 }
 
-.price-packages {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 16px;
-}
-
-.package-card {
-  border: 2px solid #E2E8F0;
+.price-info-card {
+  background: #F8FAFC;
   border-radius: 12px;
   padding: 24px;
-  text-align: center;
-  cursor: pointer;
-  transition: all 0.2s;
 }
 
-.package-card:hover,
-.package-card.active {
-  border-color: #1E40AF;
-  background: #EFF6FF;
+.price-header {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  margin-bottom: 16px;
 }
 
-.package-card h4 {
-  font-size: 16px;
-  font-weight: 600;
-  color: #1E3A8A;
-  margin-bottom: 8px;
+.price-header .label {
+  font-size: 14px;
+  color: #64748B;
 }
 
-.package-card .price {
-  font-size: 24px;
+.price-header .unit-price {
+  font-size: 28px;
   font-weight: 700;
   color: #22C55E;
-  margin-bottom: 8px;
 }
 
-.package-card p {
-  font-size: 13px;
+.price-desc {
   color: #64748B;
+  font-size: 14px;
+  line-height: 1.8;
+}
+
+.price-desc ul {
+  margin-top: 8px;
+  padding-left: 20px;
+}
+
+.price-desc li {
+  margin-bottom: 4px;
 }
 
 .reviews-list {
@@ -470,9 +489,16 @@ onMounted(() => {
   color: #22C55E;
 }
 
-@media (max-width: 768px) {
-  .price-packages {
-    grid-template-columns: repeat(2, 1fr);
-  }
+.count-options {
+  margin-bottom: 12px;
+}
+
+.custom-count-input {
+  width: 200px;
+}
+
+.discount {
+  color: #F59E0B;
+  font-weight: 500;
 }
 </style>

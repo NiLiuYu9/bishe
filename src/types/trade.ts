@@ -5,9 +5,6 @@ export interface Order {
   apiName: string
   buyerId: number
   buyerName: string
-  sellerId: number
-  sellerName: string
-  packageType: 'basic' | 'standard' | 'premium' | 'unlimited'
   invokeCount: number
   price: number
   status: 'pending' | 'paid' | 'completed' | 'refunded' | 'cancelled'
@@ -18,7 +15,6 @@ export interface Order {
 
 export interface OrderCreateParams {
   apiId: number
-  packageType: 'basic' | 'standard' | 'premium' | 'unlimited'
   invokeCount: number
 }
 

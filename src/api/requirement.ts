@@ -6,6 +6,10 @@ export const requirementApi = {
     return request.get<{ list: Requirement[]; total: number }>(apiEndpoints.requirement.list, params)
   },
 
+  getDetail(id: string | number) {
+    return request.get<Requirement>(`${apiEndpoints.requirement.detail}/${id}`)
+  },
+
   create(data: RequirementCreateParams) {
     return request.post<Requirement>(apiEndpoints.requirement.create, data)
   },
@@ -20,6 +24,22 @@ export const requirementApi = {
 
   apply(id: string | number, data: { description: string }) {
     return request.post(`${apiEndpoints.requirement.apply}/${id}`, data)
+  },
+
+  withdrawApply(id: string | number) {
+    return request.post(`${apiEndpoints.requirement.withdrawApply}/${id}`)
+  },
+
+  selectApplicant(id: string | number, data: { applicantId: number }) {
+    return request.post(`${apiEndpoints.requirement.selectApplicant}/${id}`, data)
+  },
+
+  complete(id: string | number) {
+    return request.post(`${apiEndpoints.requirement.complete}/${id}`)
+  },
+
+  cancel(id: string | number) {
+    return request.post(`${apiEndpoints.requirement.cancel}/${id}`)
   },
 
   getMyRequirements(params: RequirementListParams) {

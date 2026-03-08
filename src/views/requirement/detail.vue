@@ -27,30 +27,39 @@
           <p>{{ requirement.description }}</p>
         </div>
         
-        <div class="req-tags">
-          <h3>功能标签</h3>
-          <div class="tags-list">
-            <el-tag v-for="tag in requirement.tags" :key="tag">{{ tag }}</el-tag>
-          </div>
-        </div>
-        
         <div class="req-params">
           <h3>参数要求</h3>
           <el-row :gutter="24">
             <el-col :span="12">
               <h4>请求参数</h4>
               <el-table :data="requirement.requestParams" border size="small">
-                <el-table-column prop="name" label="参数名" />
-                <el-table-column prop="type" label="类型" />
+                <el-table-column prop="name" label="参数名" width="120" />
+                <el-table-column prop="type" label="类型" width="80" />
+                <el-table-column prop="required" label="必填" width="60">
+                  <template #default="{ row }">
+                    <el-tag :type="row.required ? 'danger' : 'info'" size="small">
+                      {{ row.required ? '是' : '否' }}
+                    </el-tag>
+                  </template>
+                </el-table-column>
                 <el-table-column prop="description" label="说明" />
+                <el-table-column prop="example" label="示例" width="100" />
               </el-table>
             </el-col>
             <el-col :span="12">
               <h4>返回参数</h4>
               <el-table :data="requirement.responseParams" border size="small">
-                <el-table-column prop="name" label="字段名" />
-                <el-table-column prop="type" label="类型" />
+                <el-table-column prop="name" label="字段名" width="120" />
+                <el-table-column prop="type" label="类型" width="80" />
+                <el-table-column prop="required" label="必填" width="60">
+                  <template #default="{ row }">
+                    <el-tag :type="row.required ? 'danger' : 'info'" size="small">
+                      {{ row.required ? '是' : '否' }}
+                    </el-tag>
+                  </template>
+                </el-table-column>
                 <el-table-column prop="description" label="说明" />
+                <el-table-column prop="example" label="示例" width="100" />
               </el-table>
             </el-col>
           </el-row>
@@ -129,7 +138,6 @@ const requirement = ref<Requirement>({
   id: 0,
   title: '',
   description: '',
-  tags: [],
   requestParams: [],
   responseParams: [],
   budget: 0,
@@ -152,42 +160,14 @@ const fetchRequirement = async () => {
   const id = route.params.id as string
   loading.value = true
   try {
-    const res = await requirementApi.getList({ page: 1, pageSize: 1 })
-    requirement.value = res.data.list.find(r => r.id === Number(id)) || mockRequirement
+    const res = await requirementApi.getDetail(id)
+    requirement.value = res.data
   } catch (error) {
     console.error('获取需求详情失败', error)
-    requirement.value = mockRequirement
+    ElMessage.error('获取需求详情失败')
   } finally {
     loading.value = false
   }
-}
-
-const mockRequirement: Requirement = {
-  id: 1,
-  title: '需要一个企业信息查询API',
-  description: '需要根据企业名称或统一社会信用代码查询企业基本信息，包括注册资本、法人代表、经营范围、成立日期、企业状态等。要求接口响应速度快，数据准确，支持批量查询。',
-  tags: ['数据查询', '企业信息', '工商数据'],
-  requestParams: [
-    { name: 'companyName', type: 'string', description: '企业名称' },
-    { name: 'creditCode', type: 'string', description: '统一社会信用代码' }
-  ],
-  responseParams: [
-    { name: 'name', type: 'string', description: '企业名称' },
-    { name: 'creditCode', type: 'string', description: '统一社会信用代码' },
-    { name: 'legalPerson', type: 'string', description: '法人代表' },
-    { name: 'registeredCapital', type: 'string', description: '注册资本' }
-  ],
-  budget: 500,
-  deadline: '2024-02-01',
-  userId: 1,
-  username: 'user1',
-  status: 'open',
-  applicants: [
-    { id: 1, userId: 2, username: 'developer1', description: '有丰富的数据接口开发经验', status: 'pending', applyTime: '2024-01-16' },
-    { id: 2, userId: 3, username: 'developer2', description: '已有类似接口，可直接提供', status: 'pending', applyTime: '2024-01-17' }
-  ],
-  createTime: '2024-01-15',
-  updateTime: '2024-01-15'
 }
 
 const submitApply = async () => {
@@ -198,13 +178,19 @@ const submitApply = async () => {
     fetchRequirement()
   } catch (error) {
     console.error('申请失败:', error)
-    ElMessage.success('申请成功（模拟）')
-    showApplyDialog.value = false
+    ElMessage.error('申请失败')
   }
 }
 
 const selectApplicant = async (applicant: Applicant) => {
-  ElMessage.success('已选择开发者')
+  try {
+    await requirementApi.selectApplicant(requirement.value.id, { applicantId: applicant.id })
+    ElMessage.success('已选择开发者')
+    fetchRequirement()
+  } catch (error) {
+    console.error('选择开发者失败:', error)
+    ElMessage.error('选择开发者失败')
+  }
 }
 
 const getStatusType = (status: string) => {
@@ -292,13 +278,11 @@ onMounted(() => {
 }
 
 .req-desc,
-.req-tags,
 .req-params {
   margin-bottom: 24px;
 }
 
 .req-desc h3,
-.req-tags h3,
 .req-params h3 {
   font-size: 16px;
   font-weight: 600;
@@ -311,11 +295,6 @@ onMounted(() => {
   line-height: 1.6;
 }
 
-.tags-list {
-  display: flex;
-  gap: 8px;
-}
-
 .req-params h4 {
   font-size: 14px;
   font-weight: 500;
@@ -325,6 +304,13 @@ onMounted(() => {
 
 .applicants-section {
   margin-bottom: 24px;
+}
+
+.section-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #1E3A8A;
+  margin-bottom: 16px;
 }
 
 .action-section {

@@ -23,7 +23,7 @@ export const apiManagement = {
   },
 
   getMyApis(params: ApiListParams) {
-    return request.get<{ records: ApiItem[]; total: number }>(apiEndpoints.api.myApis, params)
+    return request.get<{ list: ApiItem[]; total: number }>(apiEndpoints.api.myApis, params)
   },
 
   submitAudit(id: string | number) {

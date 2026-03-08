@@ -37,6 +37,10 @@
             <el-icon><List /></el-icon>
             <span>订单管理</span>
           </el-menu-item>
+          <el-menu-item index="/admin/requirements">
+            <el-icon><Document /></el-icon>
+            <span>需求管理</span>
+          </el-menu-item>
           <el-menu-item index="/admin/statistics">
             <el-icon><DataLine /></el-icon>
             <span>平台统计</span>
@@ -89,7 +93,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { useUserStore } from '@/stores/user'
 import { useAppStore } from '@/stores/app'
 import { 
-  DataBoard, User, Box, Grid, List, DataLine, 
+  DataBoard, User, Box, Grid, List, DataLine, Document,
   Fold, Expand, SwitchButton 
 } from '@element-plus/icons-vue'
 

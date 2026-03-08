@@ -26,10 +26,6 @@
           
           <p class="req-desc">{{ req.description }}</p>
           
-          <div class="req-tags">
-            <el-tag v-for="tag in req.tags" :key="tag" size="small">{{ tag }}</el-tag>
-          </div>
-          
           <div class="req-info">
             <span><el-icon><Money /></el-icon> 预算: ¥{{ req.budget }}</span>
             <span><el-icon><Calendar /></el-icon> 截止: {{ req.deadline }}</span>
@@ -39,15 +35,17 @@
             <span class="time">发布于: {{ req.createTime }}</span>
             <div class="actions">
               <el-button text type="primary" @click="viewDetail(req)">查看详情</el-button>
-              <el-button v-if="activeTab === 'published'" text type="primary" @click="editRequirement(req)">编辑</el-button>
-              <el-button v-if="activeTab === 'published'" text type="danger" @click="deleteRequirement(req)">删除</el-button>
+              <el-button v-if="activeTab === 'published' && req.status === 'open'" text type="primary" @click="editRequirement(req)">编辑</el-button>
+              <el-button v-if="activeTab === 'published' && req.status !== 'in_progress'" text type="danger" @click="deleteRequirement(req)">删除</el-button>
+              <el-button v-if="activeTab === 'published' && req.status === 'in_progress'" text type="success" @click="completeRequirement(req)">完成</el-button>
+              <el-button v-if="activeTab === 'published' && (req.status === 'open' || req.status === 'in_progress')" text type="warning" @click="cancelRequirement(req)">取消</el-button>
             </div>
           </div>
         </div>
       </div>
     </div>
     
-    <el-dialog v-model="showCreateDialog" :title="editingReq ? '编辑需求' : '发布需求'" width="600px">
+    <el-dialog v-model="showCreateDialog" :title="editingReq ? '编辑需求' : '发布需求'" width="900px">
       <el-form ref="formRef" :model="reqForm" :rules="rules" label-width="100px">
         <el-form-item label="需求标题" prop="title">
           <el-input v-model="reqForm.title" placeholder="请输入需求标题" />
@@ -57,17 +55,6 @@
           <el-input v-model="reqForm.description" type="textarea" :rows="4" placeholder="详细描述您的需求" />
         </el-form-item>
         
-        <el-form-item label="功能标签" prop="tags">
-          <el-select v-model="reqForm.tags" multiple placeholder="选择相关标签">
-            <el-option label="数据查询" value="数据查询" />
-            <el-option label="图像处理" value="图像处理" />
-            <el-option label="文本处理" value="文本处理" />
-            <el-option label="支付接口" value="支付接口" />
-            <el-option label="位置服务" value="位置服务" />
-            <el-option label="通信服务" value="通信服务" />
-          </el-select>
-        </el-form-item>
-        
         <el-form-item label="预算金额" prop="budget">
           <el-input v-model.number="reqForm.budget" type="number" placeholder="预算金额">
             <template #prepend>¥</template>
@@ -75,13 +62,97 @@
         </el-form-item>
         
         <el-form-item label="交付日期" prop="deadline">
-          <el-date-picker v-model="reqForm.deadline" type="date" placeholder="选择交付日期" />
+          <el-date-picker v-model="reqForm.deadline" type="date" placeholder="选择交付日期" value-format="YYYY-MM-DD" />
+        </el-form-item>
+        
+        <el-divider content-position="left">请求参数</el-divider>
+        <el-form-item label="" prop="requestParams">
+          <div class="params-container">
+            <div v-for="(param, index) in reqForm.requestParams" :key="index" class="param-item">
+              <el-row :gutter="8">
+                <el-col :span="4">
+                  <el-input v-model="param.name" placeholder="参数名" />
+                </el-col>
+                <el-col :span="5">
+                  <el-select v-model="param.type" placeholder="类型">
+                    <el-option label="string" value="string" />
+                    <el-option label="number" value="number" />
+                    <el-option label="boolean" value="boolean" />
+                    <el-option label="object" value="object" />
+                    <el-option label="array" value="array" />
+                  </el-select>
+                </el-col>
+                <el-col :span="4">
+                  <el-select v-model="param.required" placeholder="必填">
+                    <el-option label="必填" :value="true" />
+                    <el-option label="选填" :value="false" />
+                  </el-select>
+                </el-col>
+                <el-col :span="5">
+                  <el-input v-model="param.description" placeholder="描述" />
+                </el-col>
+                <el-col :span="4">
+                  <el-input v-model="param.example" placeholder="示例值" />
+                </el-col>
+                <el-col :span="2">
+                  <el-button type="danger" text @click="removeRequestParam(index)">
+                    <el-icon><Delete /></el-icon>
+                  </el-button>
+                </el-col>
+              </el-row>
+            </div>
+            <el-button type="primary" text @click="addRequestParam">
+              <el-icon><Plus /></el-icon> 添加请求参数
+            </el-button>
+          </div>
+        </el-form-item>
+        
+        <el-divider content-position="left">响应参数</el-divider>
+        <el-form-item label="" prop="responseParams">
+          <div class="params-container">
+            <div v-for="(param, index) in reqForm.responseParams" :key="index" class="param-item">
+              <el-row :gutter="8">
+                <el-col :span="4">
+                  <el-input v-model="param.name" placeholder="参数名" />
+                </el-col>
+                <el-col :span="5">
+                  <el-select v-model="param.type" placeholder="类型">
+                    <el-option label="string" value="string" />
+                    <el-option label="number" value="number" />
+                    <el-option label="boolean" value="boolean" />
+                    <el-option label="object" value="object" />
+                    <el-option label="array" value="array" />
+                  </el-select>
+                </el-col>
+                <el-col :span="4">
+                  <el-select v-model="param.required" placeholder="必填">
+                    <el-option label="必填" :value="true" />
+                    <el-option label="选填" :value="false" />
+                  </el-select>
+                </el-col>
+                <el-col :span="5">
+                  <el-input v-model="param.description" placeholder="描述" />
+                </el-col>
+                <el-col :span="4">
+                  <el-input v-model="param.example" placeholder="示例值" />
+                </el-col>
+                <el-col :span="2">
+                  <el-button type="danger" text @click="removeResponseParam(index)">
+                    <el-icon><Delete /></el-icon>
+                  </el-button>
+                </el-col>
+              </el-row>
+            </div>
+            <el-button type="primary" text @click="addResponseParam">
+              <el-icon><Plus /></el-icon> 添加响应参数
+            </el-button>
+          </div>
         </el-form-item>
       </el-form>
       
       <template #footer>
         <el-button @click="showCreateDialog = false">取消</el-button>
-        <el-button type="primary" @click="handleSubmit">发布</el-button>
+        <el-button type="primary" @click="handleSubmit">{{ editingReq ? '保存' : '发布' }}</el-button>
       </template>
     </el-dialog>
   </div>
@@ -91,7 +162,7 @@
 import { ref, reactive, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Plus, Money, Calendar } from '@element-plus/icons-vue'
+import { Plus, Money, Calendar, Delete } from '@element-plus/icons-vue'
 import { requirementApi } from '@/api/requirement'
 import type { Requirement, RequirementCreateParams } from '@/types/requirement'
 import type { FormInstance, FormRules } from 'element-plus'
@@ -109,7 +180,6 @@ const requirements = ref<Requirement[]>([])
 const reqForm = reactive<RequirementCreateParams>({
   title: '',
   description: '',
-  tags: [],
   requestParams: [],
   responseParams: [],
   budget: 0,
@@ -120,7 +190,57 @@ const rules: FormRules = {
   title: [{ required: true, message: '请输入需求标题', trigger: 'blur' }],
   description: [{ required: true, message: '请输入需求描述', trigger: 'blur' }],
   budget: [{ required: true, message: '请输入预算金额', trigger: 'blur' }],
-  deadline: [{ required: true, message: '请选择交付日期', trigger: 'change' }]
+  deadline: [{ required: true, message: '请选择交付日期', trigger: 'change' }],
+  requestParams: [
+    { 
+      required: true, 
+      validator: (rule, value, callback) => {
+        if (!value || value.length === 0) {
+          callback(new Error('请至少添加一个请求参数'))
+        } else {
+          callback()
+        }
+      },
+      trigger: 'change'
+    }
+  ],
+  responseParams: [
+    { 
+      required: true, 
+      validator: (rule, value, callback) => {
+        if (!value || value.length === 0) {
+          callback(new Error('请至少添加一个响应参数'))
+        } else {
+          callback()
+        }
+      },
+      trigger: 'change'
+    }
+  ]
+}
+
+const createEmptyParam = () => ({
+  name: '',
+  type: 'string',
+  required: true,
+  description: '',
+  example: ''
+})
+
+const addRequestParam = () => {
+  reqForm.requestParams.push(createEmptyParam())
+}
+
+const removeRequestParam = (index: number) => {
+  reqForm.requestParams.splice(index, 1)
+}
+
+const addResponseParam = () => {
+  reqForm.responseParams.push(createEmptyParam())
+}
+
+const removeResponseParam = (index: number) => {
+  reqForm.responseParams.splice(index, 1)
 }
 
 const mockRequirements: Requirement[] = [
@@ -128,7 +248,6 @@ const mockRequirements: Requirement[] = [
     id: 1,
     title: '需要一个企业信息查询API',
     description: '需要根据企业名称或统一社会信用代码查询企业基本信息，包括注册资本、法人代表、经营范围等',
-    tags: ['数据查询', '企业信息'],
     requestParams: [],
     responseParams: [],
     budget: 500,
@@ -144,7 +263,6 @@ const mockRequirements: Requirement[] = [
     id: 2,
     title: '图片水印添加API',
     description: '需要给图片添加文字或图片水印，支持批量处理',
-    tags: ['图像处理'],
     requestParams: [],
     responseParams: [],
     budget: 300,
@@ -162,8 +280,8 @@ const fetchRequirements = async () => {
   loading.value = true
   try {
     const res = activeTab.value === 'published' 
-      ? await requirementApi.getMyRequirements({ page: 1, pageSize: 20 })
-      : await requirementApi.getList({ page: 1, pageSize: 20 })
+      ? await requirementApi.getMyRequirements({ pageNum: 1, pageSize: 20 })
+      : await requirementApi.getMyRequirements({ pageNum: 1, pageSize: 20, status: 'applied' })
     requirements.value = res.data.list
   } catch (error) {
     console.error('获取需求列表失败:', error)
@@ -186,7 +304,6 @@ const editRequirement = (req: Requirement) => {
   Object.assign(reqForm, {
     title: req.title,
     description: req.description,
-    tags: req.tags,
     requestParams: req.requestParams,
     responseParams: req.responseParams,
     budget: req.budget,
@@ -203,6 +320,28 @@ const deleteRequirement = async (req: Requirement) => {
     fetchRequirements()
   } catch (error) {
     console.error('删除失败:', error)
+  }
+}
+
+const completeRequirement = async (req: Requirement) => {
+  try {
+    await ElMessageBox.confirm('确定要将该需求标记为完成吗？', '提示', { type: 'info' })
+    await requirementApi.complete(req.id)
+    ElMessage.success('已标记完成')
+    fetchRequirements()
+  } catch (error) {
+    console.error('操作失败:', error)
+  }
+}
+
+const cancelRequirement = async (req: Requirement) => {
+  try {
+    await ElMessageBox.confirm('确定要取消该需求吗？', '提示', { type: 'warning' })
+    await requirementApi.cancel(req.id)
+    ElMessage.success('已取消')
+    fetchRequirements()
+  } catch (error) {
+    console.error('操作失败:', error)
   }
 }
 
@@ -224,8 +363,7 @@ const handleSubmit = async () => {
         fetchRequirements()
       } catch (error) {
         console.error('提交失败:', error)
-        ElMessage.success('操作成功（模拟）')
-        showCreateDialog.value = false
+        ElMessage.error('操作失败')
       }
     }
   })
@@ -233,15 +371,13 @@ const handleSubmit = async () => {
 
 const resetForm = () => {
   editingReq.value = null
-  Object.assign(reqForm, {
-    title: '',
-    description: '',
-    tags: [],
-    requestParams: [],
-    responseParams: [],
-    budget: 0,
-    deadline: ''
-  })
+  formRef.value?.resetFields()
+  reqForm.title = ''
+  reqForm.description = ''
+  reqForm.requestParams = []
+  reqForm.responseParams = []
+  reqForm.budget = 0
+  reqForm.deadline = ''
 }
 
 const getStatusType = (status: string) => {
@@ -305,14 +441,8 @@ onMounted(() => {
 
 .req-desc {
   color: #475569;
-  margin-bottom: 12px;
-  line-height: 1.6;
-}
-
-.req-tags {
-  display: flex;
-  gap: 8px;
   margin-bottom: 16px;
+  line-height: 1.6;
 }
 
 .req-info {
@@ -349,5 +479,16 @@ onMounted(() => {
 
 .empty-state {
   padding: 80px 0;
+}
+
+.params-container {
+  width: 100%;
+}
+
+.param-item {
+  margin-bottom: 8px;
+  padding: 8px;
+  background: #f8fafc;
+  border-radius: 4px;
 }
 </style>

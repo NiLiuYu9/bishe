@@ -10,10 +10,9 @@
           <el-input v-model="filters.orderNo" placeholder="订单号" clearable />
         </el-form-item>
         <el-form-item label="状态">
-          <el-select v-model="filters.status" placeholder="全部状态" clearable>
+          <el-select v-model="filters.status" placeholder="全部状态" clearable style="width: 140px">
             <el-option label="待付款" value="pending" />
             <el-option label="已付款" value="paid" />
-            <el-option label="已完成" value="completed" />
             <el-option label="已退款" value="refunded" />
             <el-option label="已取消" value="cancelled" />
           </el-select>
@@ -30,7 +29,6 @@
         <el-table-column prop="orderNo" label="订单号" width="180" />
         <el-table-column prop="apiName" label="API名称" />
         <el-table-column prop="buyerName" label="买家" width="120" />
-        <el-table-column prop="sellerName" label="卖家" width="120" />
         <el-table-column prop="price" label="金额" width="100">
           <template #default="{ row }">¥{{ row.price }}</template>
         </el-table-column>
@@ -65,10 +63,8 @@
           <el-tag :type="getStatusType(currentOrder?.status || '')">{{ getStatusText(currentOrder?.status || '') }}</el-tag>
         </el-descriptions-item>
         <el-descriptions-item label="API名称">{{ currentOrder?.apiName }}</el-descriptions-item>
-        <el-descriptions-item label="套餐">{{ getPackageName(currentOrder?.packageType || '') }}</el-descriptions-item>
-        <el-descriptions-item label="买家">{{ currentOrder?.buyerName }}</el-descriptions-item>
-        <el-descriptions-item label="卖家">{{ currentOrder?.sellerName }}</el-descriptions-item>
         <el-descriptions-item label="调用次数">{{ currentOrder?.invokeCount === -1 ? '无限' : currentOrder?.invokeCount }}</el-descriptions-item>
+        <el-descriptions-item label="买家">{{ currentOrder?.buyerName }}</el-descriptions-item>
         <el-descriptions-item label="金额">¥{{ currentOrder?.price }}</el-descriptions-item>
         <el-descriptions-item label="创建时间">{{ currentOrder?.createTime }}</el-descriptions-item>
         <el-descriptions-item label="支付时间">{{ currentOrder?.payTime || '-' }}</el-descriptions-item>
@@ -108,9 +104,6 @@ const mockOrders: Order[] = [
     apiName: '天气查询API',
     buyerId: 1,
     buyerName: 'user1',
-    sellerId: 2,
-    sellerName: 'developer1',
-    packageType: 'standard',
     invokeCount: 500,
     price: 45,
     status: 'completed',
@@ -125,9 +118,6 @@ const mockOrders: Order[] = [
     apiName: '身份证OCR识别',
     buyerId: 2,
     buyerName: 'user2',
-    sellerId: 3,
-    sellerName: 'developer2',
-    packageType: 'basic',
     invokeCount: 100,
     price: 10,
     status: 'pending',
@@ -176,6 +166,7 @@ const viewOrder = (order: Order) => {
 const refundOrder = async (order: Order) => {
   try {
     await ElMessageBox.confirm('确定要退款吗？', '提示', { type: 'warning' })
+    await adminApi.updateOrderStatus(order.id, 'refunded')
     ElMessage.success('退款成功')
     fetchOrders()
   } catch (error) {
@@ -203,16 +194,6 @@ const getStatusText = (status: string) => {
     cancelled: '已取消'
   }
   return texts[status] || status
-}
-
-const getPackageName = (type: string) => {
-  const names: Record<string, string> = {
-    basic: '基础版',
-    standard: '标准版',
-    premium: '专业版',
-    unlimited: '无限版'
-  }
-  return names[type] || type
 }
 
 onMounted(() => {

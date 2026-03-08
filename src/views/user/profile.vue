@@ -51,6 +51,13 @@
           </div>
           <el-button text type="primary" @click="copySecretKey">复制</el-button>
         </div>
+        <div class="security-item">
+          <div class="security-info">
+            <span class="label">重新生成密钥</span>
+            <span class="value warning-text">重新生成后原密钥将失效</span>
+          </div>
+          <el-button text type="danger" @click="showRegenerateDialog = true">重新生成</el-button>
+        </div>
       </div>
     </div>
     
@@ -71,14 +78,28 @@
         <el-button type="primary" @click="changePassword">确认修改</el-button>
       </template>
     </el-dialog>
+
+    <el-dialog v-model="showRegenerateDialog" title="重新生成密钥" width="400px">
+      <div class="regenerate-warning">
+        <el-icon :size="48" color="#E6A23C"><WarningFilled /></el-icon>
+        <p>确定要重新生成 AccessKey 和 SecretKey 吗？</p>
+        <p class="warning-detail">重新生成后，原密钥将立即失效，使用原密钥的应用将无法继续调用API。</p>
+      </div>
+      <template #footer>
+        <el-button @click="showRegenerateDialog = false">取消</el-button>
+        <el-button type="danger" @click="regenerateKeys">确认重新生成</el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
+import { WarningFilled } from '@element-plus/icons-vue'
 import { useUserStore } from '@/stores/user'
 import { authApi } from '@/api/auth'
+import { accessKeyApi } from '@/api/accessKey'
 
 const userStore = useUserStore()
 
@@ -99,12 +120,20 @@ onMounted(async () => {
   } catch (error) {
     console.error('获取用户信息失败', error)
   }
+  try {
+    const res = await accessKeyApi.getAccessKey()
+    accessKey.value = res.data.accessKey
+    secretKey.value = res.data.secretKey
+  } catch (error) {
+    console.error('获取AccessKey失败', error)
+  }
 })
 
-const accessKey = ref('ak_' + Math.random().toString(36).substr(2, 16))
-const secretKey = ref('sk_' + Math.random().toString(36).substr(2, 24))
+const accessKey = ref('')
+const secretKey = ref('')
 
 const showPasswordDialog = ref(false)
+const showRegenerateDialog = ref(false)
 const passwordForm = reactive({
   oldPassword: '',
   newPassword: '',
@@ -161,6 +190,18 @@ const copySecretKey = () => {
   navigator.clipboard.writeText(secretKey.value)
   ElMessage.success('已复制到剪贴板')
 }
+
+const regenerateKeys = async () => {
+  try {
+    const res = await accessKeyApi.regenerateAccessKey()
+    accessKey.value = res.data.accessKey
+    secretKey.value = res.data.secretKey
+    ElMessage.success('密钥已重新生成')
+    showRegenerateDialog.value = false
+  } catch (error) {
+    console.error('重新生成密钥失败', error)
+  }
+}
 </script>
 
 <style scoped>
@@ -208,5 +249,26 @@ const copySecretKey = () => {
 .security-info .value {
   font-size: 13px;
   color: #64748B;
+}
+
+.security-info .warning-text {
+  color: #E6A23C;
+}
+
+.regenerate-warning {
+  text-align: center;
+  padding: 20px 0;
+}
+
+.regenerate-warning p {
+  margin: 12px 0 0;
+  font-size: 16px;
+  color: #303133;
+}
+
+.regenerate-warning .warning-detail {
+  font-size: 14px;
+  color: #909399;
+  margin-top: 8px;
 }
 </style>

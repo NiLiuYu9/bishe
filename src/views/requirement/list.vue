@@ -12,15 +12,6 @@
         <el-form-item label="关键词">
           <el-input v-model="filters.keyword" placeholder="搜索需求" clearable />
         </el-form-item>
-        <el-form-item label="标签">
-          <el-select v-model="filters.tags" multiple placeholder="选择标签" clearable>
-            <el-option label="数据查询" value="数据查询" />
-            <el-option label="图像处理" value="图像处理" />
-            <el-option label="文本处理" value="文本处理" />
-            <el-option label="支付接口" value="支付接口" />
-            <el-option label="位置服务" value="位置服务" />
-          </el-select>
-        </el-form-item>
         <el-form-item label="预算范围">
           <el-col :span="11">
             <el-input v-model.number="filters.minBudget" placeholder="最低" />
@@ -51,10 +42,6 @@
           
           <p class="req-desc">{{ req.description }}</p>
           
-          <div class="req-tags">
-            <el-tag v-for="tag in req.tags" :key="tag" size="small" type="info">{{ tag }}</el-tag>
-          </div>
-          
           <div class="req-meta">
             <div class="req-info">
               <span><el-icon><User /></el-icon> {{ req.username }}</span>
@@ -72,7 +59,7 @@
       
       <div class="pagination" v-if="total > 0">
         <el-pagination
-          v-model:current-page="pagination.page"
+          v-model:current-page="pagination.pageNum"
           v-model:page-size="pagination.pageSize"
           :total="total"
           layout="total, sizes, prev, pager, next"
@@ -121,13 +108,12 @@ const applyForm = reactive({ description: '' })
 
 const filters = reactive({
   keyword: '',
-  tags: [] as string[],
   minBudget: undefined as number | undefined,
   maxBudget: undefined as number | undefined
 })
 
 const pagination = reactive({
-  page: 1,
+  pageNum: 1,
   pageSize: 10
 })
 
@@ -136,7 +122,6 @@ const mockRequirements: Requirement[] = [
     id: 1,
     title: '需要一个企业信息查询API',
     description: '需要根据企业名称或统一社会信用代码查询企业基本信息，包括注册资本、法人代表、经营范围等。要求接口响应速度快，数据准确。',
-    tags: ['数据查询', '企业信息'],
     requestParams: [],
     responseParams: [],
     budget: 500,
@@ -152,7 +137,6 @@ const mockRequirements: Requirement[] = [
     id: 2,
     title: '图片水印添加API',
     description: '需要给图片添加文字或图片水印，支持批量处理，支持透明度设置和位置调整。',
-    tags: ['图像处理'],
     requestParams: [],
     responseParams: [],
     budget: 300,
@@ -168,7 +152,6 @@ const mockRequirements: Requirement[] = [
     id: 3,
     title: '短信验证码API',
     description: '需要短信验证码发送接口，支持三大运营商，到达率99%以上。',
-    tags: ['通信服务'],
     requestParams: [],
     responseParams: [],
     budget: 800,
@@ -186,7 +169,7 @@ const fetchRequirements = async () => {
   loading.value = true
   try {
     const res = await requirementApi.getList({
-      page: pagination.page,
+      pageNum: pagination.pageNum,
       pageSize: pagination.pageSize,
       ...filters
     })
@@ -202,16 +185,15 @@ const fetchRequirements = async () => {
 }
 
 const handleSearch = () => {
-  pagination.page = 1
+  pagination.pageNum = 1
   fetchRequirements()
 }
 
 const resetFilters = () => {
   filters.keyword = ''
-  filters.tags = []
   filters.minBudget = undefined
   filters.maxBudget = undefined
-  pagination.page = 1
+  pagination.pageNum = 1
   fetchRequirements()
 }
 
@@ -234,8 +216,7 @@ const submitApply = async () => {
     applyDialogVisible.value = false
   } catch (error) {
     console.error('申请失败:', error)
-    ElMessage.success('申请成功（模拟）')
-    applyDialogVisible.value = false
+    ElMessage.error('申请失败')
   }
 }
 
@@ -315,14 +296,8 @@ onMounted(() => {
 
 .req-desc {
   color: #475569;
-  margin-bottom: 12px;
-  line-height: 1.6;
-}
-
-.req-tags {
-  display: flex;
-  gap: 8px;
   margin-bottom: 16px;
+  line-height: 1.6;
 }
 
 .req-meta {

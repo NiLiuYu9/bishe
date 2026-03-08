@@ -147,7 +147,7 @@ const fetchUsers = async () => {
       status: filters.status ?? undefined
     }
     const res = await adminApi.getUsers(params)
-    users.value = res.data.records
+    users.value = res.data.list
     total.value = res.data.total
   } catch (error) {
     console.error('获取用户列表失败:', error)

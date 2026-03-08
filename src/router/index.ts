@@ -62,6 +62,12 @@ const routes: RouteRecordRaw[] = [
             meta: { title: '我的订单' }
           },
           {
+            path: 'quota',
+            name: 'MyQuota',
+            component: () => import('@/views/user/quota.vue'),
+            meta: { title: '我的调用次数' }
+          },
+          {
             path: 'my-requirements',
             name: 'MyRequirements',
             component: () => import('@/views/user/my-requirements.vue'),
@@ -133,6 +139,12 @@ const routes: RouteRecordRaw[] = [
         meta: { title: '订单管理' }
       },
       {
+        path: 'requirements',
+        name: 'AdminRequirements',
+        component: () => import('@/views/admin/requirements.vue'),
+        meta: { title: '需求管理' }
+      },
+      {
         path: 'statistics',
         name: 'AdminStatistics',
         component: () => import('@/views/admin/statistics.vue'),
@@ -153,7 +165,7 @@ const router = createRouter({
   routes
 })
 
-router.beforeEach(async (to, from, next) => {
+router.beforeEach(async (to, _from, next) => {
   document.title = `${to.meta.title || 'API交易平台'} - API Market`
   
   const userStore = useUserStore()

@@ -15,6 +15,13 @@ export const apiEndpoints = {
     updateUserInfo: '/auth/user-info',
     updatePassword: '/auth/password'
   },
+  accessKey: {
+    info: '/user/accessKey/info',
+    regenerate: '/user/accessKey/regenerate'
+  },
+  quota: {
+    list: '/quota/list'
+  },
   api: {
     list: '/api/list',
     detail: '/api/detail',
@@ -27,10 +34,12 @@ export const apiEndpoints = {
     apiTypes: '/api/api-types'
   },
   trade: {
-    purchase: '/trade/purchase',
-    orders: '/trade/orders',
-    orderDetail: '/trade/order-detail',
-    evaluate: '/trade/evaluate'
+    purchase: '/order/create',
+    orders: '/order/list',
+    orderDetail: '/order/detail',
+    updateStatus: '/order/update-status',
+    delete: '/order/delete',
+    evaluate: '/order/evaluate'
   },
   test: {
     testCall: '/test/call',
@@ -39,10 +48,15 @@ export const apiEndpoints = {
   },
   requirement: {
     list: '/requirement/list',
+    detail: '/requirement/detail',
     create: '/requirement/create',
     update: '/requirement/update',
     delete: '/requirement/delete',
     apply: '/requirement/apply',
+    withdrawApply: '/requirement/withdraw-apply',
+    selectApplicant: '/requirement/select-applicant',
+    complete: '/requirement/complete',
+    cancel: '/requirement/cancel',
     myRequirements: '/requirement/my-requirements'
   },
   admin: {
@@ -58,7 +72,11 @@ export const apiEndpoints = {
     updateApiType: '/admin/api-types',
     updateApiTypeStatus: '/admin/updateApiTypeStatus',
     orders: '/admin/orders',
-    statistics: '/admin/statistics'
+    updateOrderStatus: '/admin/updateOrderStatus',
+    statistics: '/admin/statistics',
+    requirements: '/admin/requirements',
+    requirementDetail: '/admin/requirements',
+    updateRequirementStatus: '/admin/updateRequirementStatus'
   }
 }
 

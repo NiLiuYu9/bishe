@@ -1,9 +1,9 @@
 import { request, apiEndpoints } from '@/utils/request'
-import type { User, ApiItem, ApiType, Order, PlatformStatistics } from '@/types'
+import type { User, ApiItem, ApiType, Order, PlatformStatistics, Requirement } from '@/types'
 
 export const adminApi = {
   getUsers(params: { pageNum: number; pageSize: number; username?: string; status?: number }) {
-    return request.get<{ records: User[]; total: number }>(apiEndpoints.admin.users, params)
+    return request.get<{ list: User[]; total: number }>(apiEndpoints.admin.users, params)
   },
 
   getUserDetail(id: string | number) {
@@ -46,11 +46,36 @@ export const adminApi = {
     return request.post(`${apiEndpoints.admin.updateApiTypeStatus}/${id}`, data)
   },
 
-  getOrders(params: { page: number; pageSize: number; status?: string }) {
-    return request.get<{ list: Order[]; total: number }>(apiEndpoints.admin.orders, params)
+  getOrders(params: { page: number; pageSize: number; status?: string; orderNo?: string }) {
+    return request.get<{ list: Order[]; total: number }>(apiEndpoints.admin.orders, {
+      pageNum: params.page,
+      pageSize: params.pageSize,
+      status: params.status,
+      orderNo: params.orderNo
+    })
+  },
+
+  getOrderDetail(id: string | number) {
+    return request.get<Order>(`${apiEndpoints.admin.orders}/${id}`)
+  },
+
+  updateOrderStatus(id: string | number, status: string) {
+    return request.put<void>(`${apiEndpoints.admin.updateOrderStatus}/${id}?status=${status}`)
   },
 
   getStatistics(params: { startDate: string; endDate: string }) {
     return request.get<PlatformStatistics>(apiEndpoints.admin.statistics, params)
+  },
+
+  getRequirements(params: { pageNum: number; pageSize: number; status?: string; keyword?: string }) {
+    return request.get<{ list: Requirement[]; total: number }>(apiEndpoints.admin.requirements, params)
+  },
+
+  getRequirementDetail(id: string | number) {
+    return request.get<Requirement>(`${apiEndpoints.admin.requirementDetail}/${id}`)
+  },
+
+  updateRequirementStatus(id: string | number, data: { status: string }) {
+    return request.post(`${apiEndpoints.admin.updateRequirementStatus}/${id}`, data)
   }
 }

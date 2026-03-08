@@ -339,7 +339,7 @@ const fetchApiList = async () => {
       pageSize: pagination.pageSize,
       status: activeTab.value === 'all' ? undefined : activeTab.value
     })
-    apiList.value = res.data.records || []
+    apiList.value = res.data.list || []
     total.value = res.data.total || 0
   } catch (error) {
     console.error('获取API列表失败:', error)

@@ -5,7 +5,9 @@
     <el-tabs v-model="activeTab" @tab-change="handleTabChange">
       <el-tab-pane label="全部" name="all" />
       <el-tab-pane label="待付款" name="pending" />
-      <el-tab-pane label="已完成" name="completed" />
+      <el-tab-pane label="已付款" name="paid" />
+      <el-tab-pane label="已退款" name="refunded" />
+      <el-tab-pane label="已取消" name="cancelled" />
     </el-tabs>
     
     <div class="orders-list" v-loading="loading">
@@ -26,7 +28,6 @@
           <div class="order-body">
             <div class="api-info">
               <h4>{{ order.apiName }}</h4>
-              <p>套餐: {{ getPackageName(order.packageType) }}</p>
               <p>调用次数: {{ order.invokeCount === -1 ? '无限' : order.invokeCount }}次</p>
             </div>
             <div class="price-info">
@@ -92,7 +93,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { tradeApi } from '@/api/trade'
@@ -118,43 +119,6 @@ const pagination = reactive({
   pageSize: 10
 })
 
-const mockOrders: Order[] = [
-  {
-    id: 1,
-    orderNo: 'ORD202401010001',
-    apiId: 1,
-    apiName: '天气查询API',
-    buyerId: 1,
-    buyerName: 'user1',
-    sellerId: 2,
-    sellerName: 'developer1',
-    packageType: 'standard',
-    invokeCount: 500,
-    price: 45,
-    status: 'completed',
-    createTime: '2024-01-01 10:30:00',
-    payTime: '2024-01-01 10:35:00',
-    completeTime: '2024-01-01 10:35:00'
-  },
-  {
-    id: 2,
-    orderNo: 'ORD202401020001',
-    apiId: 2,
-    apiName: '身份证OCR识别',
-    buyerId: 1,
-    buyerName: 'user1',
-    sellerId: 3,
-    sellerName: 'developer2',
-    packageType: 'basic',
-    invokeCount: 100,
-    price: 10,
-    status: 'pending',
-    createTime: '2024-01-02 14:20:00',
-    payTime: '',
-    completeTime: ''
-  }
-]
-
 const fetchOrders = async () => {
   loading.value = true
   try {
@@ -167,8 +131,9 @@ const fetchOrders = async () => {
     total.value = res.data.total
   } catch (error) {
     console.error('获取订单失败:', error)
-    orders.value = mockOrders
-    total.value = mockOrders.length
+    ElMessage.error('获取订单失败')
+    orders.value = []
+    total.value = 0
   } finally {
     loading.value = false
   }
@@ -179,8 +144,24 @@ const handleTabChange = () => {
   fetchOrders()
 }
 
-const handlePay = (order: Order) => {
-  ElMessage.info('跳转支付页面（待实现）')
+watch(() => pagination.page, () => {
+  fetchOrders()
+})
+
+watch(() => pagination.pageSize, () => {
+  pagination.page = 1
+  fetchOrders()
+})
+
+const handlePay = async (order: Order) => {
+  try {
+    await tradeApi.updateOrderStatus(order.id, 'paid')
+    ElMessage.success('支付成功')
+    fetchOrders()
+  } catch (error) {
+    console.error('支付失败:', error)
+    ElMessage.error('支付失败')
+  }
 }
 
 const goToApi = (apiId: number) => {
@@ -233,16 +214,6 @@ const getStatusText = (status: string) => {
     cancelled: '已取消'
   }
   return texts[status] || status
-}
-
-const getPackageName = (type: string) => {
-  const names: Record<string, string> = {
-    basic: '基础版',
-    standard: '标准版',
-    premium: '专业版',
-    unlimited: '无限版'
-  }
-  return names[type] || type
 }
 
 onMounted(() => {
