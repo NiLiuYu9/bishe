@@ -7,18 +7,45 @@
       </el-button>
     </div>
     
+    <el-tabs v-model="activeTab" @tab-change="handleTabChange">
+      <el-tab-pane label="全部" name="all" />
+      <el-tab-pane label="启用" name="active" />
+      <el-tab-pane label="禁用" name="inactive" />
+    </el-tabs>
+    
     <div class="api-types-table card">
       <el-table :data="apiTypes" border v-loading="loading">
         <el-table-column prop="id" label="ID" width="80" />
         <el-table-column prop="name" label="分类名称" />
         <el-table-column prop="description" label="描述" />
-        <el-table-column label="操作" width="150">
+        <el-table-column prop="status" label="状态" width="100">
+          <template #default="{ row }">
+            <el-tag :type="row.status === 'active' ? 'success' : 'info'">
+              {{ row.status === 'active' ? '启用' : '禁用' }}
+            </el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column prop="updateTime" label="更新时间" width="180" />
+        <el-table-column label="操作" width="150" fixed="right">
           <template #default="{ row }">
             <el-button text type="primary" @click="editApiType(row)">编辑</el-button>
-            <el-button text type="danger" @click="deleteApiType(row)">删除</el-button>
+            <el-button v-if="row.status === 'active'" text type="warning" @click="disableApiType(row)">禁用</el-button>
+            <el-button v-if="row.status === 'inactive'" text type="success" @click="enableApiType(row)">启用</el-button>
           </template>
         </el-table-column>
       </el-table>
+      
+      <div class="pagination">
+        <el-pagination
+          v-model:current-page="pagination.page"
+          v-model:page-size="pagination.pageSize"
+          :page-sizes="[10, 20, 50, 100]"
+          :total="total"
+          layout="total, sizes, prev, pager, next, jumper"
+          @size-change="handleSizeChange"
+          @current-change="handleCurrentChange"
+        />
+      </div>
     </div>
     
     <el-dialog v-model="showCreateDialog" :title="editingApiType ? '编辑分类' : '新增分类'" width="400px">
@@ -50,15 +77,16 @@ const loading = ref(false)
 const showCreateDialog = ref(false)
 const editingApiType = ref<ApiType | null>(null)
 const formRef = ref<FormInstance>()
+const activeTab = ref('all')
 
-const apiTypes = ref<ApiType[]>([
-  { id: 1, name: '数据查询', description: '各类数据查询服务' },
-  { id: 2, name: '文档处理', description: '文档转换、识别等服务' },
-  { id: 3, name: '图像识别', description: '人脸识别、OCR等服务' },
-  { id: 4, name: '位置服务', description: '地图、定位、导航服务' },
-  { id: 5, name: '支付服务', description: '支付、转账、退款服务' },
-  { id: 6, name: '通信服务', description: '短信、语音、邮件服务' }
-])
+const pagination = reactive({
+  page: 1,
+  pageSize: 10
+})
+
+const total = ref(0)
+
+const apiTypes = ref<ApiType[]>([])
 
 const apiTypeForm = reactive({
   name: '',
@@ -73,13 +101,34 @@ const rules: FormRules = {
 const fetchApiTypes = async () => {
   loading.value = true
   try {
-    const res = await adminApi.getApiTypes()
-    apiTypes.value = res.data
+    const res = await adminApi.getApiTypes({
+      pageNum: pagination.page,
+      pageSize: pagination.pageSize,
+      status: activeTab.value === 'all' ? undefined : activeTab.value
+    })
+    apiTypes.value = res.data.list
+    total.value = res.data.total
   } catch (error) {
     console.error('获取分类失败:', error)
+    apiTypes.value = []
+    total.value = 0
   } finally {
     loading.value = false
   }
+}
+
+const handleTabChange = () => {
+  pagination.page = 1
+  fetchApiTypes()
+}
+
+const handleSizeChange = () => {
+  pagination.page = 1
+  fetchApiTypes()
+}
+
+const handleCurrentChange = () => {
+  fetchApiTypes()
 }
 
 const editApiType = (apiType: ApiType) => {
@@ -89,14 +138,25 @@ const editApiType = (apiType: ApiType) => {
   showCreateDialog.value = true
 }
 
-const deleteApiType = async (apiType: ApiType) => {
+const disableApiType = async (apiType: ApiType) => {
   try {
-    await ElMessageBox.confirm('确定要删除该分类吗？', '提示', { type: 'warning' })
-    await adminApi.deleteApiType(apiType.id)
-    ElMessage.success('删除成功')
+    await adminApi.updateApiTypeStatus(apiType.id, { status: 'inactive' })
+    ElMessage.success('已禁用')
     fetchApiTypes()
   } catch (error) {
-    console.error('删除失败:', error)
+    console.error('禁用失败:', error)
+    ElMessage.error('禁用失败')
+  }
+}
+
+const enableApiType = async (apiType: ApiType) => {
+  try {
+    await adminApi.updateApiTypeStatus(apiType.id, { status: 'active' })
+    ElMessage.success('已启用')
+    fetchApiTypes()
+  } catch (error) {
+    console.error('启用失败:', error)
+    ElMessage.error('启用失败')
   }
 }
 
@@ -118,8 +178,7 @@ const handleSubmit = async () => {
         fetchApiTypes()
       } catch (error) {
         console.error('操作失败:', error)
-        ElMessage.success('操作成功（模拟）')
-        showCreateDialog.value = false
+        ElMessage.error('操作失败')
       }
     }
   })
@@ -142,5 +201,11 @@ onMounted(() => {
   align-items: center;
   justify-content: space-between;
   margin-bottom: 24px;
+}
+
+.pagination {
+  margin-top: 20px;
+  display: flex;
+  justify-content: flex-end;
 }
 </style>

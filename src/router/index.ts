@@ -118,7 +118,7 @@ const routes: RouteRecordRaw[] = [
         path: 'apis',
         name: 'AdminApis',
         component: () => import('@/views/admin/apis.vue'),
-        meta: { title: 'API审核' }
+        meta: { title: 'API管理' }
       },
       {
         path: 'api-types',

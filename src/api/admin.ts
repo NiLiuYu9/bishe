@@ -18,16 +18,20 @@ export const adminApi = {
     return request.put(`${apiEndpoints.admin.unfreezeUser}/${id}/unfreeze`)
   },
 
-  getApis(params: { page: number; pageSize: number; status?: string }) {
+  getApis(params: { pageNum: number; pageSize: number; status?: string }) {
     return request.get<{ list: ApiItem[]; total: number }>(apiEndpoints.admin.apis, params)
   },
 
-  auditApi(id: string | number, data: { status: 'approved' | 'rejected'; reason?: string }) {
-    return request.post(`${apiEndpoints.admin.auditApi}/${id}`, data)
+  updateApiStatus(id: string | number, data: { status: string; reason?: string }) {
+    return request.post(`${apiEndpoints.admin.updateApiStatus}/${id}`, data)
   },
 
-  getApiTypes() {
-    return request.get<ApiType[]>(apiEndpoints.admin.apiTypes)
+  getApiTypes(params: { pageNum: number; pageSize: number; status?: string }) {
+    return request.get<{ list: ApiType[]; total: number }>(apiEndpoints.admin.apiTypes, params)
+  },
+
+  getAllApiTypes() {
+    return request.get<ApiType[]>(apiEndpoints.admin.allApiTypes)
   },
 
   createApiType(data: { name: string; description: string }) {
@@ -38,8 +42,8 @@ export const adminApi = {
     return request.put(`${apiEndpoints.admin.updateApiType}/${id}`, data)
   },
 
-  deleteApiType(id: string | number) {
-    return request.delete(`${apiEndpoints.admin.deleteApiType}/${id}`)
+  updateApiTypeStatus(id: string | number, data: { status: string }) {
+    return request.post(`${apiEndpoints.admin.updateApiTypeStatus}/${id}`, data)
   },
 
   getOrders(params: { page: number; pageSize: number; status?: string }) {

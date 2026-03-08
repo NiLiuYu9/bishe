@@ -7,7 +7,7 @@
         <div class="search-box">
           <el-input
             v-model="searchKeyword"
-            placeholder="搜索API名称、功能描述..."
+            placeholder="搜索API名称、功能描述、作者名..."
             size="large"
             @keyup.enter="handleSearch"
           >
@@ -43,11 +43,11 @@
           @click="goToCategory(category.id)"
         >
           <div class="category-icon">
-            <el-icon :size="32"><component :is="category.icon" /></el-icon>
+            <el-icon :size="32"><DataLine /></el-icon>
           </div>
           <h3>{{ category.name }}</h3>
           <p>{{ category.description }}</p>
-          <span class="api-count">{{ category.apiCount }} 个API</span>
+          <span class="api-count">{{ category.apiCount || 0 }} 个API</span>
         </div>
       </div>
     </section>
@@ -68,7 +68,7 @@
         >
           <div class="api-header">
             <el-tag :type="getMethodType(api.method)">{{ api.method }}</el-tag>
-            <span class="api-category">{{ api.category }}</span>
+            <span class="api-category">{{ api.typeName }}</span>
           </div>
           <h3 class="api-name">{{ api.name }}</h3>
           <p class="api-desc">{{ api.description }}</p>
@@ -134,27 +134,22 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { 
   Search, ArrowRight, View, Star, Lock, 
   TrendCharts, Monitor, ChatDotRound,
-  DataLine, Document, Picture, Location, Money
+  DataLine, Document, Picture, Location, Money, More
 } from '@element-plus/icons-vue'
+import { apiManagement } from '@/api/api'
+import type { ApiType } from '@/types/api'
 
 const router = useRouter()
 
 const searchKeyword = ref('')
 const hotKeywords = ['天气查询', '身份证识别', '短信验证', '地图服务', '支付接口']
 
-const categories = ref([
-  { id: 1, name: '数据查询', description: '各类数据查询服务', icon: DataLine, apiCount: 128 },
-  { id: 2, name: '文档处理', description: '文档转换、识别等服务', icon: Document, apiCount: 86 },
-  { id: 3, name: '图像识别', description: '人脸识别、OCR等服务', icon: Picture, apiCount: 64 },
-  { id: 4, name: '位置服务', description: '地图、定位、导航服务', icon: Location, apiCount: 42 },
-  { id: 5, name: '支付服务', description: '支付、转账、退款服务', icon: Money, apiCount: 35 },
-  { id: 6, name: '更多分类', description: '探索更多API服务', icon: 'More', apiCount: 200 }
-])
+const categories = ref<ApiType[]>([])
 
 const featuredApis = ref([
   {
@@ -162,7 +157,7 @@ const featuredApis = ref([
     name: '天气查询API',
     description: '支持全国城市天气查询，实时天气、未来天气预报',
     method: 'GET',
-    category: '数据查询',
+    typeName: '数据查询',
     price: 0.01,
     priceUnit: 'per_call',
     invokeCount: 125680,
@@ -173,7 +168,7 @@ const featuredApis = ref([
     name: '身份证OCR识别',
     description: '高精度身份证识别，支持正反面识别',
     method: 'POST',
-    category: '图像识别',
+    typeName: '图像识别',
     price: 0.05,
     priceUnit: 'per_call',
     invokeCount: 89560,
@@ -184,7 +179,7 @@ const featuredApis = ref([
     name: '短信验证码',
     description: '支持三大运营商，到达率99.9%',
     method: 'POST',
-    category: '通信服务',
+    typeName: '通信服务',
     price: 0.04,
     priceUnit: 'per_call',
     invokeCount: 256780,
@@ -195,13 +190,26 @@ const featuredApis = ref([
     name: '地图逆地理编码',
     description: '经纬度转换为详细地址信息',
     method: 'GET',
-    category: '位置服务',
+    typeName: '位置服务',
     price: 0.02,
     priceUnit: 'per_call',
     invokeCount: 67890,
     rating: 4.6
   }
 ])
+
+const loadCategories = async () => {
+  try {
+    const res = await apiManagement.getApiTypes({ pageNum: 1, pageSize: 100 })
+    categories.value = res.data.list
+  } catch (error) {
+    console.error('加载分类失败', error)
+  }
+}
+
+onMounted(() => {
+  loadCategories()
+})
 
 const handleSearch = () => {
   if (searchKeyword.value.trim()) {
@@ -214,7 +222,7 @@ const searchByKeyword = (keyword: string) => {
 }
 
 const goToCategory = (id: number) => {
-  router.push({ path: '/api', query: { categoryId: id.toString() } })
+  router.push({ path: '/api', query: { typeId: id.toString() } })
 }
 
 const goToApiDetail = (id: number) => {

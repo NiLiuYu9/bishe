@@ -70,6 +70,8 @@
           v-model:page-size="pagination.pageSize"
           :total="total"
           layout="total, sizes, prev, pager, next"
+          @current-change="fetchApiList"
+          @size-change="fetchApiList"
         />
       </div>
     </div>
@@ -329,57 +331,6 @@ const removeResponseParam = (index: number) => {
   apiForm.responseParams.splice(index, 1)
 }
 
-const mockApiList: ApiItem[] = [
-  {
-    id: 1,
-    name: '天气查询API',
-    description: '支持全国城市天气查询',
-    typeName: '数据查询',
-    typeId: 1,
-    userId: 1,
-    username: 'developer1',
-    method: 'GET',
-    endpoint: '/weather/query',
-    requestParams: [],
-    responseParams: [],
-    price: 0.01,
-    priceUnit: 'per_call',
-    callLimit: 1000,
-    status: 'approved',
-    createTime: '2024-01-01',
-    updateTime: '2024-01-01',
-    docUrl: '',
-    rating: 4.8,
-    invokeCount: 125680,
-    successCount: 125000,
-    failCount: 680
-  },
-  {
-    id: 2,
-    name: '身份证OCR识别',
-    description: '高精度身份证识别',
-    typeName: '图像识别',
-    typeId: 3,
-    userId: 1,
-    username: 'developer1',
-    method: 'POST',
-    endpoint: '/ocr/idcard',
-    requestParams: [],
-    responseParams: [],
-    price: 0.05,
-    priceUnit: 'per_call',
-    callLimit: 500,
-    status: 'pending',
-    createTime: '2024-01-02',
-    updateTime: '2024-01-02',
-    docUrl: '',
-    rating: 0,
-    invokeCount: 0,
-    successCount: 0,
-    failCount: 0
-  }
-]
-
 const fetchApiList = async () => {
   loading.value = true
   try {
@@ -388,12 +339,12 @@ const fetchApiList = async () => {
       pageSize: pagination.pageSize,
       status: activeTab.value === 'all' ? undefined : activeTab.value
     })
-    apiList.value = res.data.records
-    total.value = res.data.total
+    apiList.value = res.data.records || []
+    total.value = res.data.total || 0
   } catch (error) {
     console.error('获取API列表失败:', error)
-    apiList.value = mockApiList
-    total.value = mockApiList.length
+    apiList.value = []
+    total.value = 0
   } finally {
     loading.value = false
   }
@@ -536,9 +487,10 @@ const getPriceUnit = (unit: string) => {
 const fetchTypes = async () => {
   try {
     const res = await apiManagement.getTypes()
-    types.value = res.data
+    types.value = res.data || []
   } catch (error) {
     console.error('获取类型列表失败:', error)
+    types.value = []
   }
 }
 

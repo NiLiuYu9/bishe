@@ -13,9 +13,16 @@
           </div>
           
           <nav class="nav-menu">
-            <router-link to="/" class="nav-item">首页</router-link>
+            <router-link to="/" class="nav-item" exact>首页</router-link>
             <router-link to="/api" class="nav-item">API市场</router-link>
             <router-link to="/requirement" class="nav-item">需求广场</router-link>
+            <template v-if="userStore.isLoggedIn">
+              <router-link to="/user/my-apis" class="nav-item">我的API</router-link>
+              <router-link to="/user/orders" class="nav-item">我的订单</router-link>
+              <router-link to="/user/my-requirements" class="nav-item">我的需求</router-link>
+              <router-link to="/user/statistics" class="nav-item">统计分析</router-link>
+              <router-link to="/admin" class="nav-item">管理后台</router-link>
+            </template>
           </nav>
           
           <div class="header-right">
@@ -40,22 +47,7 @@
                 </div>
                 <template #dropdown>
                   <el-dropdown-menu>
-                    <el-dropdown-item command="/user/my-apis">
-                      <el-icon><Box /></el-icon>我的API
-                    </el-dropdown-item>
-                    <el-dropdown-item command="/user/orders">
-                      <el-icon><List /></el-icon>我的订单
-                    </el-dropdown-item>
-                    <el-dropdown-item command="/user/my-requirements">
-                      <el-icon><Document /></el-icon>我的需求
-                    </el-dropdown-item>
-                    <el-dropdown-item command="/user/statistics">
-                      <el-icon><DataLine /></el-icon>统计分析
-                    </el-dropdown-item>
-                    <el-dropdown-item command="/admin" divided>
-                      <el-icon><Setting /></el-icon>管理后台
-                    </el-dropdown-item>
-                    <el-dropdown-item command="logout" divided>
+                    <el-dropdown-item command="logout">
                       <el-icon><SwitchButton /></el-icon>退出登录
                     </el-dropdown-item>
                   </el-dropdown-menu>
@@ -95,7 +87,7 @@
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useUserStore } from '@/stores/user'
-import { Search, Box, List, Document, DataLine, SwitchButton, Setting } from '@element-plus/icons-vue'
+import { Search, SwitchButton } from '@element-plus/icons-vue'
 
 const router = useRouter()
 const userStore = useUserStore()
@@ -170,7 +162,7 @@ const handleCommand = (command: string) => {
 }
 
 .nav-item:hover,
-.nav-item.router-link-active {
+.nav-item.router-link-exact-active {
   color: #1E40AF;
 }
 

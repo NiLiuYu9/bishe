@@ -35,6 +35,10 @@ export const apiManagement = {
   },
 
   getTypes() {
-    return request.get<ApiType[]>(apiEndpoints.admin.apiTypes)
+    return request.get<ApiType[]>(apiEndpoints.admin.allApiTypes)
+  },
+
+  getApiTypes(params?: { pageNum?: number; pageSize?: number }) {
+    return request.get<{ list: ApiType[]; total: number }>(apiEndpoints.api.apiTypes, params)
   }
 }

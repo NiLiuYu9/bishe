@@ -27,7 +27,7 @@
           </el-menu-item>
           <el-menu-item index="/admin/apis">
             <el-icon><Box /></el-icon>
-            <span>API审核</span>
+            <span>API管理</span>
           </el-menu-item>
           <el-menu-item index="/admin/api-types">
             <el-icon><Grid /></el-icon>
@@ -54,7 +54,7 @@
               </el-icon>
             </el-button>
             <el-breadcrumb separator="/">
-              <el-breadcrumb-item :to="{ path: '/admin' }">首页</el-breadcrumb-item>
+              <el-breadcrumb-item @click="router.push('/')" class="breadcrumb-home">首页</el-breadcrumb-item>
               <el-breadcrumb-item>{{ route.meta.title }}</el-breadcrumb-item>
             </el-breadcrumb>
           </div>
@@ -67,10 +67,7 @@
               </div>
               <template #dropdown>
                 <el-dropdown-menu>
-                  <el-dropdown-item @click="router.push('/')">
-                    <el-icon><House /></el-icon>返回前台
-                  </el-dropdown-item>
-                  <el-dropdown-item divided @click="handleLogout">
+                  <el-dropdown-item @click="handleLogout">
                     <el-icon><SwitchButton /></el-icon>退出登录
                   </el-dropdown-item>
                 </el-dropdown-menu>
@@ -93,7 +90,7 @@ import { useUserStore } from '@/stores/user'
 import { useAppStore } from '@/stores/app'
 import { 
   DataBoard, User, Box, Grid, List, DataLine, 
-  Fold, Expand, House, SwitchButton 
+  Fold, Expand, SwitchButton 
 } from '@element-plus/icons-vue'
 
 const route = useRoute()
@@ -166,9 +163,18 @@ const handleLogout = async () => {
   gap: 16px;
 }
 
+.breadcrumb-home {
+  cursor: pointer;
+}
+
+.breadcrumb-home:hover {
+  color: #1E40AF;
+}
+
 .header-right {
   display: flex;
   align-items: center;
+  gap: 16px;
 }
 
 .user-info {

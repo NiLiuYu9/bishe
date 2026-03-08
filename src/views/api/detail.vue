@@ -25,7 +25,7 @@
         
         <div class="api-meta">
           <span><el-icon><User /></el-icon> {{ api.username }}</span>
-          <span><el-icon><Folder /></el-icon> {{ api.category }}</span>
+          <span><el-icon><Folder /></el-icon> {{ api.typeName }}</span>
           <span><el-icon><View /></el-icon> {{ api.invokeCount }} 次调用</span>
           <span><el-icon><Star /></el-icon> {{ api.rating }} 评分</span>
         </div>
@@ -164,8 +164,8 @@ const api = ref<ApiItem>({
   id: 0,
   name: '',
   description: '',
-  category: '',
-  categoryId: 0,
+  typeName: '',
+  typeId: 0,
   userId: 0,
   username: '',
   method: 'GET',
@@ -234,37 +234,8 @@ const fetchApiDetail = async () => {
     api.value = res.data
   } catch (error) {
     console.error('获取API详情失败:', error)
-    api.value = {
-      id: 1,
-      name: '天气查询API',
-      description: '支持全国城市天气查询，实时天气、未来天气预报，数据准确可靠。支持按城市名称、城市ID、经纬度等多种方式查询。',
-      category: '数据查询',
-      categoryId: 1,
-      userId: 1,
-      username: 'developer1',
-      method: 'GET',
-      endpoint: '/weather/query',
-      requestParams: [
-        { name: 'city', type: 'string', required: true, description: '城市名称', example: '北京' },
-        { name: 'type', type: 'string', required: false, description: '查询类型：now(实时)/forecast(预报)', example: 'now' }
-      ],
-      responseParams: [
-        { name: 'code', type: 'int', required: true, description: '状态码', example: '200' },
-        { name: 'data', type: 'object', required: true, description: '天气数据', example: '{}' },
-        { name: 'message', type: 'string', required: true, description: '提示信息', example: 'success' }
-      ],
-      price: 0.01,
-      priceUnit: 'per_call',
-      callLimit: 1000,
-      status: 'approved',
-      createTime: '2024-01-01',
-      updateTime: '2024-01-01',
-      docUrl: '',
-      rating: 4.8,
-      invokeCount: 125680,
-      successCount: 125000,
-      failCount: 680
-    }
+    ElMessage.error('获取API详情失败')
+    router.back()
   } finally {
     loading.value = false
   }

@@ -71,4 +71,8 @@ export interface ApiType {
   id: number
   name: string
   description: string
+  status: string
+  createTime?: string
+  updateTime?: string
+  apiCount?: number
 }

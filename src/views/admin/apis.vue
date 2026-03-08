@@ -1,14 +1,15 @@
 <template>
   <div class="admin-apis-page">
     <div class="page-header">
-      <h2 class="page-title">API审核</h2>
+      <h2 class="page-title">API管理</h2>
     </div>
     
     <el-tabs v-model="activeTab" @tab-change="handleTabChange">
+      <el-tab-pane label="全部" name="all" />
       <el-tab-pane label="待审核" name="pending" />
       <el-tab-pane label="已通过" name="approved" />
       <el-tab-pane label="已拒绝" name="rejected" />
-      <el-tab-pane label="全部" name="all" />
+      <el-tab-pane label="已下架" name="offline" />
     </el-tabs>
     
     <div class="apis-table card">
@@ -22,7 +23,7 @@
             </div>
           </template>
         </el-table-column>
-        <el-table-column prop="category" label="分类" width="120" />
+        <el-table-column prop="typeName" label="分类" width="120" />
         <el-table-column prop="username" label="提交者" width="120" />
         <el-table-column prop="price" label="价格" width="100">
           <template #default="{ row }">¥{{ row.price }}/{{ getPriceUnit(row.priceUnit) }}</template>
@@ -32,7 +33,7 @@
             <el-tag :type="getStatusType(row.status)">{{ getStatusText(row.status) }}</el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="createTime" label="提交时间" width="180" />
+        <el-table-column prop="updateTime" label="更新时间" width="180" />
         <el-table-column label="操作" width="200" fixed="right">
           <template #default="{ row }">
             <el-button text type="primary" @click="viewApi(row)">查看</el-button>
@@ -40,6 +41,8 @@
               <el-button text type="success" @click="approveApi(row)">通过</el-button>
               <el-button text type="danger" @click="rejectApi(row)">拒绝</el-button>
             </template>
+            <el-button v-if="row.status === 'approved'" text type="warning" @click="offlineApi(row)">下架</el-button>
+            <el-button v-if="row.status === 'offline'" text type="success" @click="onlineApi(row)">上架</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -50,6 +53,8 @@
           v-model:page-size="pagination.pageSize"
           :total="total"
           layout="total, sizes, prev, pager, next"
+          @current-change="fetchApis"
+          @size-change="fetchApis"
         />
       </div>
     </div>
@@ -58,7 +63,7 @@
       <el-descriptions :column="2" border>
         <el-descriptions-item label="API名称">{{ currentApi?.name }}</el-descriptions-item>
         <el-descriptions-item label="请求方式">{{ currentApi?.method }}</el-descriptions-item>
-        <el-descriptions-item label="分类">{{ currentApi?.category }}</el-descriptions-item>
+        <el-descriptions-item label="分类">{{ currentApi?.typeName }}</el-descriptions-item>
         <el-descriptions-item label="提交者">{{ currentApi?.username }}</el-descriptions-item>
         <el-descriptions-item label="接口路径" :span="2">{{ currentApi?.endpoint }}</el-descriptions-item>
         <el-descriptions-item label="价格">¥{{ currentApi?.price }}/{{ getPriceUnit(currentApi?.priceUnit || '') }}</el-descriptions-item>
@@ -100,7 +105,7 @@ import { adminApi } from '@/api/admin'
 import type { ApiItem } from '@/types/api'
 
 const loading = ref(false)
-const activeTab = ref('pending')
+const activeTab = ref('all')
 const apis = ref<ApiItem[]>([])
 const total = ref(0)
 
@@ -115,73 +120,20 @@ const pagination = reactive({
 
 const rejectForm = reactive({ reason: '' })
 
-const mockApis: ApiItem[] = [
-  {
-    id: 1,
-    name: '天气查询API',
-    description: '支持全国城市天气查询',
-    category: '数据查询',
-    categoryId: 1,
-    userId: 1,
-    username: 'developer1',
-    method: 'GET',
-    endpoint: '/weather/query',
-    requestParams: [
-      { name: 'city', type: 'string', required: true, description: '城市名称', example: '北京' }
-    ],
-    responseParams: [],
-    price: 0.01,
-    priceUnit: 'per_call',
-    callLimit: 1000,
-    status: 'pending',
-    createTime: '2024-01-18',
-    updateTime: '2024-01-18',
-    docUrl: '',
-    rating: 0,
-    invokeCount: 0,
-    successCount: 0,
-    failCount: 0
-  },
-  {
-    id: 2,
-    name: '身份证OCR识别',
-    description: '高精度身份证识别',
-    category: '图像识别',
-    categoryId: 3,
-    userId: 2,
-    username: 'developer2',
-    method: 'POST',
-    endpoint: '/ocr/idcard',
-    requestParams: [],
-    responseParams: [],
-    price: 0.05,
-    priceUnit: 'per_call',
-    callLimit: 500,
-    status: 'pending',
-    createTime: '2024-01-17',
-    updateTime: '2024-01-17',
-    docUrl: '',
-    rating: 0,
-    invokeCount: 0,
-    successCount: 0,
-    failCount: 0
-  }
-]
-
 const fetchApis = async () => {
   loading.value = true
   try {
     const res = await adminApi.getApis({
-      page: pagination.page,
+      pageNum: pagination.page,
       pageSize: pagination.pageSize,
       status: activeTab.value === 'all' ? undefined : activeTab.value
     })
-    apis.value = res.data.list
-    total.value = res.data.total
+    apis.value = res.data.list || []
+    total.value = res.data.total || 0
   } catch (error) {
     console.error('获取API列表失败:', error)
-    apis.value = mockApis
-    total.value = mockApis.length
+    apis.value = []
+    total.value = 0
   } finally {
     loading.value = false
   }
@@ -199,13 +151,12 @@ const viewApi = (api: ApiItem) => {
 
 const approveApi = async (api: ApiItem) => {
   try {
-    await adminApi.auditApi(api.id, { status: 'approved' })
+    await adminApi.updateApiStatus(api.id, { status: 'approved' })
     ElMessage.success('审核通过')
     fetchApis()
   } catch (error) {
     console.error('审核失败:', error)
-    ElMessage.success('审核通过（模拟）')
-    fetchApis()
+    ElMessage.error('审核失败')
   }
 }
 
@@ -219,15 +170,35 @@ const confirmReject = async () => {
   if (!currentApi.value) return
   
   try {
-    await adminApi.auditApi(currentApi.value.id, { status: 'rejected', reason: rejectForm.reason })
+    await adminApi.updateApiStatus(currentApi.value.id, { status: 'rejected', reason: rejectForm.reason })
     ElMessage.success('已拒绝')
     rejectDialogVisible.value = false
     fetchApis()
   } catch (error) {
     console.error('操作失败:', error)
-    ElMessage.success('已拒绝（模拟）')
-    rejectDialogVisible.value = false
+    ElMessage.error('操作失败')
+  }
+}
+
+const offlineApi = async (api: ApiItem) => {
+  try {
+    await adminApi.updateApiStatus(api.id, { status: 'offline' })
+    ElMessage.success('已下架')
     fetchApis()
+  } catch (error) {
+    console.error('下架失败:', error)
+    ElMessage.error('下架失败')
+  }
+}
+
+const onlineApi = async (api: ApiItem) => {
+  try {
+    await adminApi.updateApiStatus(api.id, { status: 'approved' })
+    ElMessage.success('已上架')
+    fetchApis()
+  } catch (error) {
+    console.error('上架失败:', error)
+    ElMessage.error('上架失败')
   }
 }
 
