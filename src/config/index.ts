@@ -27,10 +27,13 @@ export const apiEndpoints = {
     detail: '/api/detail',
     create: '/api/create',
     update: '/api/update',
+    updateStatus: '/api/updateStatus',
     delete: '/api/delete',
     myApis: '/api/getApis',
     audit: '/api/audit',
     statistics: '/api/statistics',
+    myInvokeStatistics: '/api/statistics/my-invoke',
+    myApiInvokeStatistics: '/api/statistics/my-api-invoke',
     apiTypes: '/api/api-types'
   },
   trade: {

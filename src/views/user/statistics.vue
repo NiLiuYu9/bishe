@@ -11,63 +11,116 @@
         end-placeholder="结束日期"
         @change="fetchStatistics"
       />
-      <el-select v-model="selectedApiId" placeholder="选择API" clearable @change="fetchStatistics">
-        <el-option label="全部API" :value="0" />
-        <el-option v-for="api in myApis" :key="api.id" :label="api.name" :value="api.id" />
-      </el-select>
+      <el-input
+        v-model="apiNameFilter"
+        placeholder="按API名称筛选"
+        clearable
+        style="width: 200px;"
+        @clear="fetchStatistics"
+        @keyup.enter="fetchStatistics"
+      />
+      <el-button type="primary" @click="fetchStatistics" style="margin-left: 8px;">查询</el-button>
     </div>
-    
-    <div class="stats-cards">
-      <div class="stat-card">
-        <div class="stat-icon" style="background: #DBEAFE;">
-          <el-icon :size="24" style="color: #1E40AF;"><View /></el-icon>
+
+    <el-tabs v-model="activeTab" @tab-change="fetchStatistics">
+      <el-tab-pane label="我的调用统计" name="my-invoke">
+        <div class="stats-cards">
+          <div class="stat-card">
+            <div class="stat-icon" style="background: #DBEAFE;">
+              <el-icon :size="24" style="color: #1E40AF;"><View /></el-icon>
+            </div>
+            <div class="stat-info">
+              <span class="stat-value">{{ myInvokeStats.invokeCount }}</span>
+              <span class="stat-label">总调用次数</span>
+            </div>
+          </div>
+          
+          <div class="stat-card">
+            <div class="stat-icon" style="background: #DCFCE7;">
+              <el-icon :size="24" style="color: #16A34A;"><CircleCheck /></el-icon>
+            </div>
+            <div class="stat-info">
+              <span class="stat-value">{{ myInvokeStats.successCount }}</span>
+              <span class="stat-label">成功次数</span>
+            </div>
+          </div>
+          
+          <div class="stat-card">
+            <div class="stat-icon" style="background: #FEE2E2;">
+              <el-icon :size="24" style="color: #DC2626;"><CircleClose /></el-icon>
+            </div>
+            <div class="stat-info">
+              <span class="stat-value">{{ myInvokeStats.failCount }}</span>
+              <span class="stat-label">失败次数</span>
+            </div>
+          </div>
+          
+          <div class="stat-card">
+            <div class="stat-icon" style="background: #FEF3C7;">
+              <el-icon :size="24" style="color: #D97706;"><TrendCharts /></el-icon>
+            </div>
+            <div class="stat-info">
+              <span class="stat-value">{{ myInvokeSuccessRate }}%</span>
+              <span class="stat-label">成功率</span>
+            </div>
+          </div>
         </div>
-        <div class="stat-info">
-          <span class="stat-value">{{ statistics.invokeCount }}</span>
-          <span class="stat-label">总调用次数</span>
+        
+        <div class="chart-section card">
+          <h3 class="section-title">调用趋势</h3>
+          <div ref="myInvokeChartRef" class="chart-container"></div>
         </div>
-      </div>
+      </el-tab-pane>
       
-      <div class="stat-card">
-        <div class="stat-icon" style="background: #DCFCE7;">
-          <el-icon :size="24" style="color: #16A34A;"><CircleCheck /></el-icon>
+      <el-tab-pane label="我的API被调用统计" name="my-api-invoke">
+        <div class="stats-cards">
+          <div class="stat-card">
+            <div class="stat-icon" style="background: #DBEAFE;">
+              <el-icon :size="24" style="color: #1E40AF;"><View /></el-icon>
+            </div>
+            <div class="stat-info">
+              <span class="stat-value">{{ myApiInvokeStats.invokeCount }}</span>
+              <span class="stat-label">总调用次数</span>
+            </div>
+          </div>
+          
+          <div class="stat-card">
+            <div class="stat-icon" style="background: #DCFCE7;">
+              <el-icon :size="24" style="color: #16A34A;"><CircleCheck /></el-icon>
+            </div>
+            <div class="stat-info">
+              <span class="stat-value">{{ myApiInvokeStats.successCount }}</span>
+              <span class="stat-label">成功次数</span>
+            </div>
+          </div>
+          
+          <div class="stat-card">
+            <div class="stat-icon" style="background: #FEE2E2;">
+              <el-icon :size="24" style="color: #DC2626;"><CircleClose /></el-icon>
+            </div>
+            <div class="stat-info">
+              <span class="stat-value">{{ myApiInvokeStats.failCount }}</span>
+              <span class="stat-label">失败次数</span>
+            </div>
+          </div>
+          
+          <div class="stat-card">
+            <div class="stat-icon" style="background: #FEF3C7;">
+              <el-icon :size="24" style="color: #D97706;"><TrendCharts /></el-icon>
+            </div>
+            <div class="stat-info">
+              <span class="stat-value">{{ myApiInvokeSuccessRate }}%</span>
+              <span class="stat-label">成功率</span>
+            </div>
+          </div>
         </div>
-        <div class="stat-info">
-          <span class="stat-value">{{ statistics.successCount }}</span>
-          <span class="stat-label">成功次数</span>
+        
+        <div class="chart-section card">
+          <h3 class="section-title">调用趋势</h3>
+          <div ref="myApiInvokeChartRef" class="chart-container"></div>
         </div>
-      </div>
-      
-      <div class="stat-card">
-        <div class="stat-icon" style="background: #FEE2E2;">
-          <el-icon :size="24" style="color: #DC2626;"><CircleClose /></el-icon>
-        </div>
-        <div class="stat-info">
-          <span class="stat-value">{{ statistics.failCount }}</span>
-          <span class="stat-label">失败次数</span>
-        </div>
-      </div>
-      
-      <div class="stat-card">
-        <div class="stat-icon" style="background: #FEF3C7;">
-          <el-icon :size="24" style="color: #D97706;"><TrendCharts /></el-icon>
-        </div>
-        <div class="stat-info">
-          <span class="stat-value">{{ successRate }}%</span>
-          <span class="stat-label">成功率</span>
-        </div>
-      </div>
-    </div>
-    
-    <div class="chart-section card">
-      <h3 class="section-title">调用趋势</h3>
-      <div ref="chartRef" class="chart-container"></div>
-    </div>
-    
-    <div class="chart-section card">
-      <h3 class="section-title">调用分布</h3>
-      <div ref="pieChartRef" class="chart-container"></div>
-    </div>
+      </el-tab-pane>
+    </el-tabs>
   </div>
 </template>
 
@@ -81,79 +134,89 @@ const dateRange = ref<[Date, Date]>([
   new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
   new Date()
 ])
-const selectedApiId = ref(0)
-const chartRef = ref<HTMLElement>()
-const pieChartRef = ref<HTMLElement>()
-let lineChart: echarts.ECharts | null = null
-let pieChart: echarts.ECharts | null = null
+const apiNameFilter = ref('')
+const activeTab = ref('my-invoke')
 
-const myApis = ref([
-  { id: 1, name: '天气查询API' },
-  { id: 2, name: '身份证OCR识别' }
-])
+const myInvokeChartRef = ref<HTMLElement>()
+const myApiInvokeChartRef = ref<HTMLElement>()
+let myInvokeChart: echarts.ECharts | null = null
+let myApiInvokeChart: echarts.ECharts | null = null
 
-const statistics = ref({
-  invokeCount: 125680,
-  successCount: 125000,
-  failCount: 680,
+const userId = ref<number>(1)
+
+const myInvokeStats = ref({
+  invokeCount: 0,
+  successCount: 0,
+  failCount: 0,
   dailyStats: [] as { date: string; invokeCount: number; successCount: number; failCount: number }[]
 })
 
-const successRate = computed(() => {
-  if (statistics.value.invokeCount === 0) return 0
-  return ((statistics.value.successCount / statistics.value.invokeCount) * 100).toFixed(2)
+const myApiInvokeStats = ref({
+  invokeCount: 0,
+  successCount: 0,
+  failCount: 0,
+  dailyStats: [] as { date: string; invokeCount: number; successCount: number; failCount: number }[]
 })
+
+const myInvokeSuccessRate = computed(() => {
+  if (myInvokeStats.value.invokeCount === 0) return 0
+  return ((myInvokeStats.value.successCount / myInvokeStats.value.invokeCount) * 100).toFixed(2)
+})
+
+const myApiInvokeSuccessRate = computed(() => {
+  if (myApiInvokeStats.value.invokeCount === 0) return 0
+  return ((myApiInvokeStats.value.successCount / myApiInvokeStats.value.invokeCount) * 100).toFixed(2)
+})
+
+const formatDate = (date: Date): string => {
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
+
+const getParams = () => {
+  const params: { userId: number; startDate?: string; endDate?: string; apiName?: string } = {
+    userId: userId.value
+  }
+  if (dateRange.value && dateRange.value[0] && dateRange.value[1]) {
+    params.startDate = formatDate(dateRange.value[0])
+    params.endDate = formatDate(dateRange.value[1])
+  }
+  if (apiNameFilter.value) {
+    params.apiName = apiNameFilter.value
+  }
+  return params
+}
 
 const fetchStatistics = async () => {
   try {
-    if (selectedApiId.value) {
-      const res = await apiManagement.getStatistics(selectedApiId.value, {
-        startDate: dateRange.value[0].toISOString(),
-        endDate: dateRange.value[1].toISOString()
-      })
-      statistics.value = res.data
+    const params = getParams()
+    
+    if (activeTab.value === 'my-invoke') {
+      const res = await apiManagement.getMyInvokeStatistics(params)
+      myInvokeStats.value = res.data
+      updateMyInvokeChart()
+    } else {
+      const res = await apiManagement.getMyApiInvokeStatistics(params)
+      myApiInvokeStats.value = res.data
+      updateMyApiInvokeChart()
     }
   } catch (error) {
     console.error('获取统计数据失败:', error)
-    statistics.value = {
-      invokeCount: 125680,
-      successCount: 125000,
-      failCount: 680,
-      dailyStats: generateMockDailyStats()
-    }
   }
-  updateCharts()
 }
 
-const generateMockDailyStats = () => {
-  const stats = []
-  for (let i = 6; i >= 0; i--) {
-    const date = new Date(Date.now() - i * 24 * 60 * 60 * 1000)
-    stats.push({
-      date: date.toLocaleDateString(),
-      invokeCount: Math.floor(Math.random() * 1000) + 500,
-      successCount: Math.floor(Math.random() * 900) + 450,
-      failCount: Math.floor(Math.random() * 50) + 10
-    })
-  }
-  return stats
-}
-
-const updateCharts = () => {
-  if (!chartRef.value || !pieChartRef.value) return
+const updateMyInvokeChart = () => {
+  if (!myInvokeChartRef.value) return
   
-  if (!lineChart) {
-    lineChart = echarts.init(chartRef.value)
-  }
-  if (!pieChart) {
-    pieChart = echarts.init(pieChartRef.value)
+  if (!myInvokeChart) {
+    myInvokeChart = echarts.init(myInvokeChartRef.value)
   }
   
-  const dailyStats = statistics.value.dailyStats.length > 0 
-    ? statistics.value.dailyStats 
-    : generateMockDailyStats()
+  const dailyStats = myInvokeStats.value.dailyStats || []
   
-  lineChart.setOption({
+  myInvokeChart.setOption({
     tooltip: { trigger: 'axis' },
     legend: { data: ['调用次数', '成功次数', '失败次数'] },
     xAxis: {
@@ -166,46 +229,73 @@ const updateCharts = () => {
         name: '调用次数',
         type: 'line',
         smooth: true,
-        data: dailyStats.map(s => s.invokeCount),
+        data: dailyStats.map(s => s.invokeCount || 0),
         itemStyle: { color: '#1E40AF' }
       },
       {
         name: '成功次数',
         type: 'line',
         smooth: true,
-        data: dailyStats.map(s => s.successCount),
+        data: dailyStats.map(s => s.successCount || 0),
         itemStyle: { color: '#22C55E' }
       },
       {
         name: '失败次数',
         type: 'line',
         smooth: true,
-        data: dailyStats.map(s => s.failCount),
+        data: dailyStats.map(s => s.failCount || 0),
         itemStyle: { color: '#EF4444' }
       }
     ]
   })
+}
+
+const updateMyApiInvokeChart = () => {
+  if (!myApiInvokeChartRef.value) return
   
-  pieChart.setOption({
-    tooltip: { trigger: 'item' },
-    legend: { orient: 'vertical', left: 'left' },
+  if (!myApiInvokeChart) {
+    myApiInvokeChart = echarts.init(myApiInvokeChartRef.value)
+  }
+  
+  const dailyStats = myApiInvokeStats.value.dailyStats || []
+  
+  myApiInvokeChart.setOption({
+    tooltip: { trigger: 'axis' },
+    legend: { data: ['调用次数', '成功次数', '失败次数'] },
+    xAxis: {
+      type: 'category',
+      data: dailyStats.map(s => s.date)
+    },
+    yAxis: { type: 'value' },
     series: [
       {
-        name: '调用分布',
-        type: 'pie',
-        radius: '50%',
-        data: [
-          { value: statistics.value.successCount, name: '成功', itemStyle: { color: '#22C55E' } },
-          { value: statistics.value.failCount, name: '失败', itemStyle: { color: '#EF4444' } }
-        ]
+        name: '调用次数',
+        type: 'line',
+        smooth: true,
+        data: dailyStats.map(s => s.invokeCount || 0),
+        itemStyle: { color: '#1E40AF' }
+      },
+      {
+        name: '成功次数',
+        type: 'line',
+        smooth: true,
+        data: dailyStats.map(s => s.successCount || 0),
+        itemStyle: { color: '#22C55E' }
+      },
+      {
+        name: '失败次数',
+        type: 'line',
+        smooth: true,
+        data: dailyStats.map(s => s.failCount || 0),
+        itemStyle: { color: '#EF4444' }
       }
     ]
   })
 }
 
 const handleResize = () => {
-  lineChart?.resize()
-  pieChart?.resize()
+  myInvokeChart?.resize()
+  myApiInvokeChart?.resize()
 }
 
 onMounted(() => {
@@ -215,8 +305,8 @@ onMounted(() => {
 
 onUnmounted(() => {
   window.removeEventListener('resize', handleResize)
-  lineChart?.dispose()
-  pieChart?.dispose()
+  myInvokeChart?.dispose()
+  myApiInvokeChart?.dispose()
 })
 </script>
 

@@ -86,7 +86,7 @@
             </el-table-column>
             <el-table-column prop="status" label="状态">
               <template #default="{ row }">
-                <el-tag :type="getStatusType(row.status)" size="small">{{ row.status }}</el-tag>
+                <el-tag :type="getStatusType(row.status)" size="small">{{ getStatusText(row.status) }}</el-tag>
               </template>
             </el-table-column>
           </el-table>
@@ -111,31 +111,32 @@ let lineChart: echarts.ECharts | null = null
 let barChart: echarts.ECharts | null = null
 
 const statistics = ref({
-  totalApis: 128,
-  totalUsers: 1024,
-  totalOrders: 356,
-  totalRevenue: 56800,
-  dailyActiveUsers: 256,
-  dailyPageViews: 3580,
+  totalApis: 0,
+  totalUsers: 0,
+  totalOrders: 0,
+  totalRevenue: 0,
+  dailyActiveUsers: 0,
+  dailyPageViews: 0,
   apiCallRanking: [] as { apiId: number; apiName: string; invokeCount: number }[],
   dailyStats: [] as { date: string; activeUsers: number; pageViews: number; newUsers: number; newOrders: number }[]
 })
 
-const pendingApis = ref([
-  { id: 1, name: '天气查询API', username: 'developer1', createTime: '2024-01-18' },
-  { id: 2, name: '身份证识别API', username: 'developer2', createTime: '2024-01-17' }
-])
+const pendingApis = ref<{ id: number; name: string; username: string; createTime: string }[]>([])
 
-const recentOrders = ref([
-  { id: 1, orderNo: 'ORD202401180001', apiName: '天气查询API', price: 45, status: 'completed' },
-  { id: 2, orderNo: 'ORD202401180002', apiName: '短信验证码', price: 100, status: 'pending' }
-])
+const recentOrders = ref<{ id: number; orderNo: string; apiName: string; price: number; status: string }[]>([])
+
+const formatDate = (date: Date): string => {
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
 
 const fetchStatistics = async () => {
   try {
     const res = await adminApi.getStatistics({
-      startDate: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
-      endDate: new Date().toISOString()
+      startDate: formatDate(new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)),
+      endDate: formatDate(new Date())
     })
     statistics.value = res.data
   } catch (error) {
@@ -144,21 +145,51 @@ const fetchStatistics = async () => {
   initCharts()
 }
 
+const fetchPendingApis = async () => {
+  try {
+    const res = await adminApi.getApis({ pageNum: 1, pageSize: 5, status: 'pending' })
+    pendingApis.value = res.data.list.map((api: any) => ({
+      id: api.id,
+      name: api.name,
+      username: api.username || api.developerName || '-',
+      createTime: api.createTime ? api.createTime.split(' ')[0] : '-'
+    }))
+  } catch (error) {
+    console.error('获取待审核API失败:', error)
+  }
+}
+
+const fetchRecentOrders = async () => {
+  try {
+    const res = await adminApi.getOrders({ page: 1, pageSize: 5 })
+    recentOrders.value = res.data.list.map((order: any) => ({
+      id: order.id,
+      orderNo: order.orderNo,
+      apiName: order.apiName || '-',
+      price: order.price || 0,
+      status: order.status
+    }))
+  } catch (error) {
+    console.error('获取最新订单失败:', error)
+  }
+}
+
 const initCharts = () => {
   if (!lineChartRef.value || !barChartRef.value) return
   
   lineChart = echarts.init(lineChartRef.value)
   barChart = echarts.init(barChartRef.value)
   
-  const dates = []
-  const activeUsers = []
-  const pageViews = []
-  for (let i = 6; i >= 0; i--) {
-    const date = new Date(Date.now() - i * 24 * 60 * 60 * 1000)
-    dates.push(date.toLocaleDateString())
-    activeUsers.push(Math.floor(Math.random() * 200) + 100)
-    pageViews.push(Math.floor(Math.random() * 1000) + 500)
-  }
+  const dailyStats = statistics.value.dailyStats || []
+  const dates = dailyStats.map((item: any) => {
+    if (item.date) {
+      const parts = item.date.split('-')
+      return `${parts[1]}-${parts[2]}`
+    }
+    return item.date
+  })
+  const activeUsers = dailyStats.map((item: any) => item.activeUsers || 0)
+  const pageViews = dailyStats.map((item: any) => item.pageViews || 0)
   
   lineChart.setOption({
     tooltip: { trigger: 'axis' },
@@ -183,16 +214,20 @@ const initCharts = () => {
     ]
   })
   
+  const ranking = statistics.value.apiCallRanking || []
+  const apiNames = ranking.map((item: any) => item.apiName || '未知API').reverse()
+  const invokeCounts = ranking.map((item: any) => item.invokeCount || 0).reverse()
+  
   barChart.setOption({
     tooltip: { trigger: 'axis' },
     xAxis: { type: 'value' },
     yAxis: {
       type: 'category',
-      data: ['天气查询', '身份证识别', '短信验证', '地图服务', '支付接口']
+      data: apiNames
     },
     series: [{
       type: 'bar',
-      data: [125680, 89560, 256780, 67890, 45600],
+      data: invokeCounts,
       itemStyle: { color: '#1E40AF' }
     }]
   })
@@ -205,10 +240,23 @@ const goToAudit = (api: any) => {
 const getStatusType = (status: string) => {
   const types: Record<string, string> = {
     pending: 'warning',
+    paid: 'primary',
     completed: 'success',
-    cancelled: 'danger'
+    cancelled: 'danger',
+    refunded: 'info'
   }
   return types[status] || 'info'
+}
+
+const getStatusText = (status: string) => {
+  const texts: Record<string, string> = {
+    pending: '待支付',
+    paid: '已支付',
+    completed: '已完成',
+    cancelled: '已取消',
+    refunded: '已退款'
+  }
+  return texts[status] || status
 }
 
 const handleResize = () => {
@@ -218,6 +266,8 @@ const handleResize = () => {
 
 onMounted(() => {
   fetchStatistics()
+  fetchPendingApis()
+  fetchRecentOrders()
   window.addEventListener('resize', handleResize)
 })
 

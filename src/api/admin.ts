@@ -63,7 +63,7 @@ export const adminApi = {
     return request.put<void>(`${apiEndpoints.admin.updateOrderStatus}/${id}?status=${status}`)
   },
 
-  getStatistics(params: { startDate: string; endDate: string }) {
+  getStatistics(params: { startDate?: string; endDate?: string; apiName?: string }) {
     return request.get<PlatformStatistics>(apiEndpoints.admin.statistics, params)
   },
 

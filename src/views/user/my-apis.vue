@@ -382,7 +382,7 @@ const offlineApi = async (api: ApiItem) => {
     await ElMessageBox.confirm('确定要下架该API吗？下架后已购买的调用次数仍可正常使用。', '提示', {
       type: 'warning'
     })
-    await apiManagement.update(api.id, { status: 'offline' as any })
+    await apiManagement.updateStatus(api.id, { status: 'offline' })
     ElMessage.success('下架成功')
     fetchApiList()
   } catch (error) {
@@ -392,13 +392,11 @@ const offlineApi = async (api: ApiItem) => {
 
 const onlineApi = async (api: ApiItem) => {
   try {
-    await apiManagement.update(api.id, { status: 'pending' as any })
+    await apiManagement.updateStatus(api.id, { status: 'pending' })
     ElMessage.success('已提交上架申请')
     fetchApiList()
   } catch (error) {
     console.error('上架失败:', error)
-    ElMessage.success('上架成功（模拟）')
-    fetchApiList()
   }
 }
 

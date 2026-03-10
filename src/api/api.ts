@@ -18,6 +18,10 @@ export const apiManagement = {
     return request.put<ApiItem>(`${apiEndpoints.api.update}/${id}`, data)
   },
 
+  updateStatus(id: string | number, data: { status: string }) {
+    return request.put(`${apiEndpoints.api.updateStatus}/${id}`, data)
+  },
+
   delete(id: string | number) {
     return request.delete(`${apiEndpoints.api.delete}/${id}`)
   },
@@ -30,8 +34,16 @@ export const apiManagement = {
     return request.post(`${apiEndpoints.api.audit}/${id}`)
   },
 
-  getStatistics(id: string | number, params: { startDate: string; endDate: string }) {
+  getStatistics(id: string | number, params: { startDate?: string; endDate?: string }) {
     return request.get<ApiStatistics>(`${apiEndpoints.api.statistics}/${id}`, params)
+  },
+
+  getMyInvokeStatistics(params: { userId: number; startDate?: string; endDate?: string; apiName?: string }) {
+    return request.get<ApiStatistics>(apiEndpoints.api.myInvokeStatistics, params)
+  },
+
+  getMyApiInvokeStatistics(params: { userId: number; startDate?: string; endDate?: string; apiName?: string }) {
+    return request.get<ApiStatistics>(apiEndpoints.api.myApiInvokeStatistics, params)
   },
 
   getTypes() {

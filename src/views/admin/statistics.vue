@@ -11,6 +11,15 @@
         end-placeholder="结束日期"
         @change="fetchStatistics"
       />
+      <el-input
+        v-model="apiNameFilter"
+        placeholder="按API名称筛选"
+        clearable
+        style="width: 200px; margin-left: 16px;"
+        @clear="fetchStatistics"
+        @keyup.enter="fetchStatistics"
+      />
+      <el-button type="primary" @click="fetchStatistics" style="margin-left: 8px;">查询</el-button>
     </div>
     
     <div class="stats-cards">
@@ -89,28 +98,42 @@ const dateRange = ref<[Date, Date]>([
   new Date()
 ])
 
+const apiNameFilter = ref('')
+
 const statistics = ref({
-  totalApis: 128,
-  totalUsers: 1024,
-  totalOrders: 356,
-  totalRevenue: 56800,
-  dailyActiveUsers: 256,
-  dailyPageViews: 3580,
-  apiCallRanking: [],
-  dailyStats: []
+  totalApis: 0,
+  totalUsers: 0,
+  totalOrders: 0,
+  totalRevenue: 0,
+  dailyActiveUsers: 0,
+  dailyPageViews: 0,
+  apiCallRanking: [] as { apiId: number; apiName: string; invokeCount: number }[],
+  dailyStats: [] as { date: string; activeUsers: number; pageViews: number; invokeCount: number; successCount: number; failCount: number }[]
 })
+
+const formatDate = (date: Date): string => {
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
 
 const fetchStatistics = async () => {
   try {
-    const res = await adminApi.getStatistics({
-      startDate: dateRange.value[0].toISOString(),
-      endDate: dateRange.value[1].toISOString()
-    })
+    const params: { startDate?: string; endDate?: string; apiName?: string } = {}
+    if (dateRange.value && dateRange.value[0] && dateRange.value[1]) {
+      params.startDate = formatDate(dateRange.value[0])
+      params.endDate = formatDate(dateRange.value[1])
+    }
+    if (apiNameFilter.value) {
+      params.apiName = apiNameFilter.value
+    }
+    const res = await adminApi.getStatistics(params)
     statistics.value = res.data
+    initCharts()
   } catch (error) {
     console.error('获取统计数据失败:', error)
   }
-  initCharts()
 }
 
 const initCharts = () => {
@@ -119,44 +142,40 @@ const initCharts = () => {
   lineChart = echarts.init(lineChartRef.value)
   barChart = echarts.init(barChartRef.value)
   
-  const dates = []
-  const activeUsers = []
-  const pageViews = []
-  const newUsers = []
-  const newOrders = []
-  
-  for (let i = 29; i >= 0; i--) {
-    const date = new Date(Date.now() - i * 24 * 60 * 60 * 1000)
-    dates.push(date.toLocaleDateString())
-    activeUsers.push(Math.floor(Math.random() * 200) + 100)
-    pageViews.push(Math.floor(Math.random() * 1000) + 500)
-    newUsers.push(Math.floor(Math.random() * 30) + 10)
-    newOrders.push(Math.floor(Math.random() * 20) + 5)
-  }
+  const dailyStats = statistics.value.dailyStats || []
+  const dates = dailyStats.map(s => s.date)
+  const activeUsers = dailyStats.map(s => s.activeUsers || 0)
+  const pageViews = dailyStats.map(s => s.pageViews || s.invokeCount || 0)
+  const invokeCounts = dailyStats.map(s => s.invokeCount || 0)
+  const successCounts = dailyStats.map(s => s.successCount || 0)
   
   lineChart.setOption({
     tooltip: { trigger: 'axis' },
-    legend: { data: ['活跃用户', '页面访问量', '新增用户', '新增订单'] },
+    legend: { data: ['活跃用户', '页面访问量', '调用次数', '成功次数'] },
     xAxis: { type: 'category', data: dates },
     yAxis: { type: 'value' },
     series: [
       { name: '活跃用户', type: 'line', smooth: true, data: activeUsers, itemStyle: { color: '#1E40AF' } },
       { name: '页面访问量', type: 'line', smooth: true, data: pageViews, itemStyle: { color: '#22C55E' } },
-      { name: '新增用户', type: 'line', smooth: true, data: newUsers, itemStyle: { color: '#F59E0B' } },
-      { name: '新增订单', type: 'line', smooth: true, data: newOrders, itemStyle: { color: '#EC4899' } }
+      { name: '调用次数', type: 'line', smooth: true, data: invokeCounts, itemStyle: { color: '#F59E0B' } },
+      { name: '成功次数', type: 'line', smooth: true, data: successCounts, itemStyle: { color: '#EC4899' } }
     ]
   })
+  
+  const ranking = statistics.value.apiCallRanking || []
+  const rankingNames = ranking.map(r => r.apiName)
+  const rankingCounts = ranking.map(r => r.invokeCount)
   
   barChart.setOption({
     tooltip: { trigger: 'axis' },
     xAxis: { type: 'value' },
     yAxis: {
       type: 'category',
-      data: ['天气查询', '身份证识别', '短信验证', '地图服务', '支付接口']
+      data: rankingNames
     },
     series: [{
       type: 'bar',
-      data: [125680, 89560, 256780, 67890, 45600],
+      data: rankingCounts,
       itemStyle: { color: '#1E40AF' }
     }]
   })
@@ -181,6 +200,8 @@ onUnmounted(() => {
 
 <style scoped>
 .filter-section {
+  display: flex;
+  align-items: center;
   margin-bottom: 24px;
 }
 
