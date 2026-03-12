@@ -38,11 +38,27 @@ export const apiManagement = {
     return request.get<ApiStatistics>(`${apiEndpoints.api.statistics}/${id}`, params)
   },
 
-  getMyInvokeStatistics(params: { userId: number; startDate?: string; endDate?: string; apiName?: string }) {
+  getMyInvokeStatistics(params: { 
+    userId: number
+    startDate?: string
+    endDate?: string
+    apiName?: string
+    typeId?: number
+    status?: string
+    timeRange?: string
+  }) {
     return request.get<ApiStatistics>(apiEndpoints.api.myInvokeStatistics, params)
   },
 
-  getMyApiInvokeStatistics(params: { userId: number; startDate?: string; endDate?: string; apiName?: string }) {
+  getMyApiInvokeStatistics(params: { 
+    userId: number
+    startDate?: string
+    endDate?: string
+    apiName?: string
+    typeId?: number
+    status?: string
+    timeRange?: string
+  }) {
     return request.get<ApiStatistics>(apiEndpoints.api.myApiInvokeStatistics, params)
   },
 

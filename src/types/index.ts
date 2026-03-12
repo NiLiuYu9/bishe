@@ -18,7 +18,7 @@ export interface User {
   username: string
   email: string
   phone: string
-  avatar: string
+  isAdmin: number
   status: number
   freezeReason: string
   createTime: string
@@ -43,5 +43,15 @@ export interface PlatformStatistics {
     pageViews: number
     newUsers: number
     newOrders: number
+    invokeCount: number
+    successCount: number
+    failCount: number
+    successRate: number
   }[]
+  prevTotalApis: number
+  prevTotalUsers: number
+  prevTotalOrders: number
+  prevTotalRevenue: number
+  prevDailyActiveUsers: number
+  prevDailyPageViews: number
 }

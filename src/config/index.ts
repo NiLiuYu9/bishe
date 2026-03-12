@@ -68,18 +68,12 @@ export const apiEndpoints = {
     freezeUser: '/admin/users',
     unfreezeUser: '/admin/users',
     apis: '/admin/apis',
-    updateApiStatus: '/admin/updateApiStatus',
     apiTypes: '/admin/api-types',
     allApiTypes: '/admin/api-types/all',
     createApiType: '/admin/api-types',
-    updateApiType: '/admin/api-types',
-    updateApiTypeStatus: '/admin/updateApiTypeStatus',
     orders: '/admin/orders',
-    updateOrderStatus: '/admin/updateOrderStatus',
     statistics: '/admin/statistics',
-    requirements: '/admin/requirements',
-    requirementDetail: '/admin/requirements',
-    updateRequirementStatus: '/admin/updateRequirementStatus'
+    requirements: '/admin/requirements'
   }
 }
 

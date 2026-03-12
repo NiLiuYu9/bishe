@@ -23,7 +23,7 @@ export const adminApi = {
   },
 
   updateApiStatus(id: string | number, data: { status: string; reason?: string }) {
-    return request.post(`${apiEndpoints.admin.updateApiStatus}/${id}`, data)
+    return request.put(`${apiEndpoints.admin.apis}/${id}/updateStatus`, data)
   },
 
   getApiTypes(params: { pageNum: number; pageSize: number; status?: string }) {
@@ -39,11 +39,11 @@ export const adminApi = {
   },
 
   updateApiType(id: string | number, data: Partial<{ name: string; description: string }>) {
-    return request.put(`${apiEndpoints.admin.updateApiType}/${id}`, data)
+    return request.put(`${apiEndpoints.admin.apiTypes}/${id}`, data)
   },
 
   updateApiTypeStatus(id: string | number, data: { status: string }) {
-    return request.post(`${apiEndpoints.admin.updateApiTypeStatus}/${id}`, data)
+    return request.put(`${apiEndpoints.admin.apiTypes}/${id}/updateStatus`, data)
   },
 
   getOrders(params: { page: number; pageSize: number; status?: string; orderNo?: string }) {
@@ -60,10 +60,17 @@ export const adminApi = {
   },
 
   updateOrderStatus(id: string | number, status: string) {
-    return request.put<void>(`${apiEndpoints.admin.updateOrderStatus}/${id}?status=${status}`)
+    return request.put<void>(`${apiEndpoints.admin.orders}/${id}/updateStatus?status=${status}`)
   },
 
-  getStatistics(params: { startDate?: string; endDate?: string; apiName?: string }) {
+  getStatistics(params: { 
+    startDate?: string
+    endDate?: string
+    apiName?: string
+    typeId?: number
+    status?: string
+    timeRange?: string
+  }) {
     return request.get<PlatformStatistics>(apiEndpoints.admin.statistics, params)
   },
 
@@ -72,10 +79,10 @@ export const adminApi = {
   },
 
   getRequirementDetail(id: string | number) {
-    return request.get<Requirement>(`${apiEndpoints.admin.requirementDetail}/${id}`)
+    return request.get<Requirement>(`${apiEndpoints.admin.requirements}/${id}`)
   },
 
   updateRequirementStatus(id: string | number, data: { status: string }) {
-    return request.post(`${apiEndpoints.admin.updateRequirementStatus}/${id}`, data)
+    return request.put(`${apiEndpoints.admin.requirements}/${id}/updateStatus`, data)
   }
 }

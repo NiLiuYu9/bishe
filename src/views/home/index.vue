@@ -19,17 +19,6 @@
             </template>
           </el-input>
         </div>
-        <div class="hot-keywords">
-          <span class="label">热门搜索：</span>
-          <el-tag
-            v-for="keyword in hotKeywords"
-            :key="keyword"
-            class="keyword-tag"
-            @click="searchByKeyword(keyword)"
-          >
-            {{ keyword }}
-          </el-tag>
-        </div>
       </div>
     </section>
     
@@ -67,8 +56,8 @@
           @click="goToApiDetail(api.id)"
         >
           <div class="api-header">
-            <el-tag :type="getMethodType(api.method)">{{ api.method }}</el-tag>
-            <span class="api-category">{{ api.typeName }}</span>
+            <el-tag type="primary">{{ api.typeName }}</el-tag>
+            <span class="api-method">{{ api.method }}</span>
           </div>
           <h3 class="api-name">{{ api.name }}</h3>
           <p class="api-desc">{{ api.description }}</p>
@@ -142,61 +131,29 @@ import {
   DataLine, Document, Picture, Location, Money, More
 } from '@element-plus/icons-vue'
 import { apiManagement } from '@/api/api'
-import type { ApiType } from '@/types/api'
+import type { ApiType, ApiItem } from '@/types/api'
 
 const router = useRouter()
 
 const searchKeyword = ref('')
-const hotKeywords = ['天气查询', '身份证识别', '短信验证', '地图服务', '支付接口']
 
 const categories = ref<ApiType[]>([])
 
-const featuredApis = ref([
-  {
-    id: 1,
-    name: '天气查询API',
-    description: '支持全国城市天气查询，实时天气、未来天气预报',
-    method: 'GET',
-    typeName: '数据查询',
-    price: 0.01,
-    priceUnit: 'per_call',
-    invokeCount: 125680,
-    rating: 4.8
-  },
-  {
-    id: 2,
-    name: '身份证OCR识别',
-    description: '高精度身份证识别，支持正反面识别',
-    method: 'POST',
-    typeName: '图像识别',
-    price: 0.05,
-    priceUnit: 'per_call',
-    invokeCount: 89560,
-    rating: 4.9
-  },
-  {
-    id: 3,
-    name: '短信验证码',
-    description: '支持三大运营商，到达率99.9%',
-    method: 'POST',
-    typeName: '通信服务',
-    price: 0.04,
-    priceUnit: 'per_call',
-    invokeCount: 256780,
-    rating: 4.7
-  },
-  {
-    id: 4,
-    name: '地图逆地理编码',
-    description: '经纬度转换为详细地址信息',
-    method: 'GET',
-    typeName: '位置服务',
-    price: 0.02,
-    priceUnit: 'per_call',
-    invokeCount: 67890,
-    rating: 4.6
+const featuredApis = ref<ApiItem[]>([])
+
+const loadFeaturedApis = async () => {
+  try {
+    const res = await apiManagement.getList({
+      pageNum: 1,
+      pageSize: 4,
+      sortBy: 'invokeCount',
+      sortOrder: 'desc'
+    })
+    featuredApis.value = res.data.list
+  } catch (error) {
+    console.error('加载热门API失败', error)
   }
-])
+}
 
 const loadCategories = async () => {
   try {
@@ -209,16 +166,13 @@ const loadCategories = async () => {
 
 onMounted(() => {
   loadCategories()
+  loadFeaturedApis()
 })
 
 const handleSearch = () => {
   if (searchKeyword.value.trim()) {
     router.push({ path: '/api', query: { keyword: searchKeyword.value } })
   }
-}
-
-const searchByKeyword = (keyword: string) => {
-  router.push({ path: '/api', query: { keyword } })
 }
 
 const goToCategory = (id: number) => {
@@ -284,29 +238,6 @@ const getPriceUnit = (unit: string) => {
 .search-box :deep(.el-input__wrapper) {
   background: #fff;
   border-radius: 8px;
-}
-
-.hot-keywords {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 12px;
-  flex-wrap: wrap;
-}
-
-.hot-keywords .label {
-  opacity: 0.8;
-}
-
-.keyword-tag {
-  cursor: pointer;
-  background: rgba(255, 255, 255, 0.2);
-  border: none;
-  color: #fff;
-}
-
-.keyword-tag:hover {
-  background: rgba(255, 255, 255, 0.3);
 }
 
 .section-title {
@@ -407,9 +338,10 @@ const getPriceUnit = (unit: string) => {
   margin-bottom: 12px;
 }
 
-.api-category {
+.api-method {
   font-size: 12px;
   color: #475569;
+  font-weight: 500;
 }
 
 .api-name {

@@ -3,7 +3,7 @@ export interface UserInfo {
   username: string
   email?: string
   phone?: string
-  avatar?: string
+  isAdmin?: number
   createTime?: string
   status?: number
 }

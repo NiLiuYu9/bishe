@@ -1,26 +1,30 @@
 <template>
   <div class="profile-page">
-    <h2 class="page-title">个人资料</h2>
+    <div class="profile-header">
+      <div class="header-left">
+        <h2 class="page-title">个人资料</h2>
+        <div class="user-info-inline">
+          <span class="username">{{ userInfo.username }}</span>
+          <el-tag v-if="userInfo.isAdmin === 1" type="danger" size="small">管理员</el-tag>
+        </div>
+      </div>
+    </div>
     
     <div class="profile-content">
-      <div class="avatar-section card">
-        <el-avatar :size="100" :src="userInfo.avatar">
-          {{ userInfo.username?.charAt(0).toUpperCase() }}
-        </el-avatar>
-        <el-button class="change-avatar-btn" size="small">更换头像</el-button>
-      </div>
-      
       <div class="info-section card">
-        <h3 class="section-title">基本信息</h3>
-        <el-form :model="userInfo" label-width="100px">
+        <div class="section-header">
+          <el-icon><User /></el-icon>
+          <h3>基本信息</h3>
+        </div>
+        <el-form :model="userInfo" label-width="80px" class="info-form">
           <el-form-item label="用户名">
-            <el-input v-model="userInfo.username" />
+            <el-input v-model="userInfo.username" placeholder="请输入用户名" />
           </el-form-item>
           <el-form-item label="邮箱">
-            <el-input v-model="userInfo.email" />
+            <el-input v-model="userInfo.email" placeholder="请输入邮箱" />
           </el-form-item>
           <el-form-item label="手机号">
-            <el-input v-model="userInfo.phone" />
+            <el-input v-model="userInfo.phone" placeholder="请输入手机号" />
           </el-form-item>
           <el-form-item>
             <el-button type="primary" @click="saveProfile">保存修改</el-button>
@@ -29,48 +33,61 @@
       </div>
       
       <div class="security-section card">
-        <h3 class="section-title">安全设置</h3>
-        <div class="security-item">
-          <div class="security-info">
-            <span class="label">登录密码</span>
-            <span class="value">已设置</span>
-          </div>
-          <el-button text type="primary" @click="showPasswordDialog = true">修改密码</el-button>
+        <div class="section-header">
+          <el-icon><Lock /></el-icon>
+          <h3>安全设置</h3>
         </div>
-        <div class="security-item">
-          <div class="security-info">
-            <span class="label">AccessKey</span>
-            <span class="value">{{ accessKey }}</span>
+        <div class="security-list">
+          <div class="security-item">
+            <div class="security-left">
+              <span class="label">登录密码</span>
+              <span class="desc">定期更换密码可以提高账号安全性</span>
+            </div>
+            <el-button type="primary" plain size="small" @click="showPasswordDialog = true">修改</el-button>
           </div>
-          <el-button text type="primary" @click="copyAccessKey">复制</el-button>
-        </div>
-        <div class="security-item">
-          <div class="security-info">
-            <span class="label">SecretKey</span>
-            <span class="value">{{ secretKey }}</span>
+          
+          <div class="security-item">
+            <div class="security-left">
+              <span class="label">AccessKey</span>
+              <span class="desc key-value">{{ accessKey || '未获取' }}</span>
+            </div>
+            <el-button type="primary" plain size="small" @click="copyAccessKey" :disabled="!accessKey">复制</el-button>
           </div>
-          <el-button text type="primary" @click="copySecretKey">复制</el-button>
-        </div>
-        <div class="security-item">
-          <div class="security-info">
-            <span class="label">重新生成密钥</span>
-            <span class="value warning-text">重新生成后原密钥将失效</span>
+          
+          <div class="security-item">
+            <div class="security-left">
+              <span class="label">SecretKey</span>
+              <span class="desc key-value">{{ showSecretKey ? (secretKey || '未获取') : (secretKey ? '••••••••••••' : '未获取') }}</span>
+            </div>
+            <div class="security-actions">
+              <el-button type="default" plain size="small" @click="showSecretKey = !showSecretKey">
+                {{ showSecretKey ? '隐藏' : '显示' }}
+              </el-button>
+              <el-button type="primary" plain size="small" @click="copySecretKey" :disabled="!secretKey">复制</el-button>
+            </div>
           </div>
-          <el-button text type="danger" @click="showRegenerateDialog = true">重新生成</el-button>
+          
+          <div class="security-item warning">
+            <div class="security-left">
+              <span class="label">重新生成密钥</span>
+              <span class="desc">重新生成后原密钥将立即失效</span>
+            </div>
+            <el-button type="danger" plain size="small" @click="showRegenerateDialog = true">重新生成</el-button>
+          </div>
         </div>
       </div>
     </div>
     
-    <el-dialog v-model="showPasswordDialog" title="修改密码" width="400px">
-      <el-form :model="passwordForm" label-width="100px">
+    <el-dialog v-model="showPasswordDialog" title="修改密码" width="420px">
+      <el-form :model="passwordForm" label-width="80px">
         <el-form-item label="原密码">
-          <el-input v-model="passwordForm.oldPassword" type="password" show-password />
+          <el-input v-model="passwordForm.oldPassword" type="password" show-password placeholder="请输入原密码" />
         </el-form-item>
         <el-form-item label="新密码">
-          <el-input v-model="passwordForm.newPassword" type="password" show-password />
+          <el-input v-model="passwordForm.newPassword" type="password" show-password placeholder="请输入新密码" />
         </el-form-item>
         <el-form-item label="确认密码">
-          <el-input v-model="passwordForm.confirmPassword" type="password" show-password />
+          <el-input v-model="passwordForm.confirmPassword" type="password" show-password placeholder="请再次输入新密码" />
         </el-form-item>
       </el-form>
       <template #footer>
@@ -79,7 +96,7 @@
       </template>
     </el-dialog>
 
-    <el-dialog v-model="showRegenerateDialog" title="重新生成密钥" width="400px">
+    <el-dialog v-model="showRegenerateDialog" title="重新生成密钥" width="420px">
       <div class="regenerate-warning">
         <el-icon :size="48" color="#E6A23C"><WarningFilled /></el-icon>
         <p>确定要重新生成 AccessKey 和 SecretKey 吗？</p>
@@ -96,7 +113,7 @@
 <script setup lang="ts">
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
-import { WarningFilled } from '@element-plus/icons-vue'
+import { WarningFilled, User, Lock } from '@element-plus/icons-vue'
 import { useUserStore } from '@/stores/user'
 import { authApi } from '@/api/auth'
 import { accessKeyApi } from '@/api/accessKey'
@@ -107,7 +124,7 @@ const userInfo = reactive({
   username: '',
   email: '',
   phone: '',
-  avatar: ''
+  isAdmin: 0
 })
 
 onMounted(async () => {
@@ -116,7 +133,7 @@ onMounted(async () => {
     userInfo.username = userStore.userInfo?.username || ''
     userInfo.email = userStore.userInfo?.email || ''
     userInfo.phone = userStore.userInfo?.phone || ''
-    userInfo.avatar = userStore.userInfo?.avatar || ''
+    userInfo.isAdmin = userStore.userInfo?.isAdmin || 0
   } catch (error) {
     console.error('获取用户信息失败', error)
   }
@@ -131,6 +148,7 @@ onMounted(async () => {
 
 const accessKey = ref('')
 const secretKey = ref('')
+const showSecretKey = ref(false)
 
 const showPasswordDialog = ref(false)
 const showRegenerateDialog = ref(false)
@@ -205,54 +223,117 @@ const regenerateKeys = async () => {
 </script>
 
 <style scoped>
-.profile-content {
+.profile-header {
   display: flex;
-  flex-direction: column;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.header-left {
+  display: flex;
+  align-items: baseline;
+  gap: 16px;
+}
+
+.page-title {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 600;
+  color: #1E3A8A;
+}
+
+.user-info-inline {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.username {
+  font-size: 16px;
+  color: #64748B;
+}
+
+.profile-content {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
   gap: 24px;
 }
 
-.avatar-section {
+.section-header {
   display: flex;
-  flex-direction: column;
   align-items: center;
-  padding: 32px;
+  gap: 8px;
+  margin-bottom: 20px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #E2E8F0;
 }
 
-.change-avatar-btn {
-  margin-top: 16px;
+.section-header h3 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: #1E3A8A;
+}
+
+.section-header .el-icon {
+  color: #409EFF;
+}
+
+.info-form {
+  padding: 0 8px;
+}
+
+.security-list {
+  display: flex;
+  flex-direction: column;
 }
 
 .security-item {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 16px 0;
-  border-bottom: 1px solid #E2E8F0;
+  padding: 16px 8px;
+  border-bottom: 1px solid #F1F5F9;
 }
 
 .security-item:last-child {
   border-bottom: none;
 }
 
-.security-info {
+.security-item.warning {
+  background-color: #FEF3C7;
+  margin: 8px -16px -16px -16px;
+  padding: 16px;
+  border-radius: 0 0 8px 8px;
+  border-bottom: none;
+}
+
+.security-left {
   display: flex;
   flex-direction: column;
   gap: 4px;
 }
 
-.security-info .label {
+.security-left .label {
   font-size: 14px;
-  color: #1E3A8A;
   font-weight: 500;
+  color: #1E3A8A;
 }
 
-.security-info .value {
-  font-size: 13px;
+.security-left .desc {
+  font-size: 12px;
+  color: #94A3B8;
+}
+
+.security-left .key-value {
+  font-family: monospace;
   color: #64748B;
 }
 
-.security-info .warning-text {
-  color: #E6A23C;
+.security-actions {
+  display: flex;
+  gap: 8px;
 }
 
 .regenerate-warning {
@@ -270,5 +351,11 @@ const regenerateKeys = async () => {
   font-size: 14px;
   color: #909399;
   margin-top: 8px;
+}
+
+@media (max-width: 900px) {
+  .profile-content {
+    grid-template-columns: 1fr;
+  }
 }
 </style>

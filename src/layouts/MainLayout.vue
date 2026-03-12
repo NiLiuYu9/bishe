@@ -19,9 +19,11 @@
             <template v-if="userStore.isLoggedIn">
               <router-link to="/user/my-apis" class="nav-item">我的API</router-link>
               <router-link to="/user/orders" class="nav-item">我的订单</router-link>
+              <router-link to="/user/quota" class="nav-item">调用额度</router-link>
               <router-link to="/user/my-requirements" class="nav-item">我的需求</router-link>
               <router-link to="/user/statistics" class="nav-item">统计分析</router-link>
-              <router-link to="/admin" class="nav-item">管理后台</router-link>
+              <router-link to="/user/profile" class="nav-item">个人资料</router-link>
+              <router-link v-if="userStore.userInfo?.isAdmin === 1" to="/admin" class="nav-item">管理后台</router-link>
             </template>
           </nav>
           
@@ -40,10 +42,9 @@
             <template v-if="userStore.isLoggedIn">
               <el-dropdown trigger="click" @command="handleCommand">
                 <div class="user-info">
-                  <el-avatar :size="32" :src="userStore.userInfo?.avatar">
-                    {{ userStore.userInfo?.username?.charAt(0).toUpperCase() }}
-                  </el-avatar>
+                  <el-icon :size="18"><User /></el-icon>
                   <span class="username">{{ userStore.userInfo?.username }}</span>
+                  <el-tag v-if="userStore.userInfo?.isAdmin === 1" type="danger" size="small" style="margin-left: 4px;">管理员</el-tag>
                 </div>
                 <template #dropdown>
                   <el-dropdown-menu>
@@ -87,7 +88,7 @@
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useUserStore } from '@/stores/user'
-import { Search, SwitchButton } from '@element-plus/icons-vue'
+import { Search, SwitchButton, User } from '@element-plus/icons-vue'
 
 const router = useRouter()
 const userStore = useUserStore()

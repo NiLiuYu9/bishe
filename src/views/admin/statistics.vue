@@ -3,19 +3,26 @@
     <h2 class="page-title">平台统计</h2>
     
     <div class="filter-section">
-      <el-date-picker
-        v-model="dateRange"
-        type="daterange"
-        range-separator="至"
-        start-placeholder="开始日期"
-        end-placeholder="结束日期"
+      <TimeRangeSelector v-model="timeRangeValue" @update:model-value="handleTimeRangeChange" />
+      <el-select
+        v-model="typeIdFilter"
+        placeholder="API分类"
+        clearable
+        style="width: 160px; margin-left: 12px;"
         @change="fetchStatistics"
-      />
+      >
+        <el-option
+          v-for="type in apiTypes"
+          :key="type.id"
+          :label="type.name"
+          :value="type.id"
+        />
+      </el-select>
       <el-input
         v-model="apiNameFilter"
         placeholder="按API名称筛选"
         clearable
-        style="width: 200px; margin-left: 16px;"
+        style="width: 200px; margin-left: 12px;"
         @clear="fetchStatistics"
         @keyup.enter="fetchStatistics"
       />
@@ -23,51 +30,54 @@
     </div>
     
     <div class="stats-cards">
-      <div class="stat-card">
-        <div class="stat-icon" style="background: #DBEAFE;">
-          <el-icon :size="28" style="color: #1E40AF;"><User /></el-icon>
-        </div>
-        <div class="stat-info">
-          <span class="stat-value">{{ statistics.dailyActiveUsers }}</span>
-          <span class="stat-label">日活用户</span>
-        </div>
-      </div>
+      <StatsCard
+        :value="statistics.dailyActiveUsers"
+        :prev-value="statistics.prevDailyActiveUsers"
+        label="日活用户"
+        :icon="User"
+        icon-bg-color="#DBEAFE"
+        icon-color="#1E40AF"
+      />
       
-      <div class="stat-card">
-        <div class="stat-icon" style="background: #DCFCE7;">
-          <el-icon :size="28" style="color: #16A34A;"><View /></el-icon>
-        </div>
-        <div class="stat-info">
-          <span class="stat-value">{{ statistics.dailyPageViews }}</span>
-          <span class="stat-label">日访问量</span>
-        </div>
-      </div>
+      <StatsCard
+        :value="statistics.dailyPageViews"
+        :prev-value="statistics.prevDailyPageViews"
+        label="日访问量"
+        :icon="View"
+        icon-bg-color="#DCFCE7"
+        icon-color="#16A34A"
+      />
       
-      <div class="stat-card">
-        <div class="stat-icon" style="background: #FEF3C7;">
-          <el-icon :size="28" style="color: #D97706;"><TrendCharts /></el-icon>
-        </div>
-        <div class="stat-info">
-          <span class="stat-value">{{ statistics.totalApis }}</span>
-          <span class="stat-label">API总数</span>
-        </div>
-      </div>
+      <StatsCard
+        :value="statistics.totalApis"
+        :prev-value="statistics.prevTotalApis"
+        label="API总数"
+        :icon="TrendCharts"
+        icon-bg-color="#FEF3C7"
+        icon-color="#D97706"
+      />
       
-      <div class="stat-card">
-        <div class="stat-icon" style="background: #FCE7F3;">
-          <el-icon :size="28" style="color: #DB2777;"><Money /></el-icon>
-        </div>
-        <div class="stat-info">
-          <span class="stat-value">¥{{ statistics.totalRevenue }}</span>
-          <span class="stat-label">总收入</span>
-        </div>
-      </div>
+      <StatsCard
+        :value="statistics.totalRevenue"
+        :prev-value="statistics.prevTotalRevenue"
+        label="总收入"
+        :icon="Money"
+        icon-bg-color="#FCE7F3"
+        icon-color="#DB2777"
+        prefix="¥"
+      />
     </div>
     
     <el-row :gutter="24">
       <el-col :span="16">
         <div class="chart-section card">
-          <h3 class="section-title">平台趋势</h3>
+          <div class="chart-header">
+            <h3 class="section-title">平台趋势</h3>
+            <IndicatorSelector
+              v-model="selectedIndicators"
+              :indicators="platformIndicators"
+            />
+          </div>
           <div ref="lineChartRef" class="chart-container"></div>
         </div>
       </el-col>
@@ -83,22 +93,37 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref, onMounted, onUnmounted, watch } from 'vue'
 import { User, View, TrendCharts, Money } from '@element-plus/icons-vue'
 import { adminApi } from '@/api/admin'
 import * as echarts from 'echarts'
+import TimeRangeSelector from '@/components/statistics/TimeRangeSelector.vue'
+import StatsCard from '@/components/statistics/StatsCard.vue'
+import IndicatorSelector from '@/components/statistics/IndicatorSelector.vue'
+import type { ApiType } from '@/types'
 
 const lineChartRef = ref<HTMLElement>()
 const barChartRef = ref<HTMLElement>()
 let lineChart: echarts.ECharts | null = null
 let barChart: echarts.ECharts | null = null
 
-const dateRange = ref<[Date, Date]>([
-  new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
-  new Date()
-])
+const timeRangeValue = ref<{ timeRange?: string; startDate?: Date; endDate?: Date }>({
+  timeRange: 'last30days'
+})
 
+const typeIdFilter = ref<number>()
 const apiNameFilter = ref('')
+const apiTypes = ref<ApiType[]>([])
+
+const selectedIndicators = ref<string[]>(['activeUsers', 'invokeCount', 'successCount'])
+
+const platformIndicators = [
+  { label: '活跃用户', value: 'activeUsers' },
+  { label: '调用次数', value: 'invokeCount' },
+  { label: '成功次数', value: 'successCount' },
+  { label: '失败次数', value: 'failCount' },
+  { label: '成功率', value: 'successRate' }
+]
 
 const statistics = ref({
   totalApis: 0,
@@ -108,7 +133,13 @@ const statistics = ref({
   dailyActiveUsers: 0,
   dailyPageViews: 0,
   apiCallRanking: [] as { apiId: number; apiName: string; invokeCount: number }[],
-  dailyStats: [] as { date: string; activeUsers: number; pageViews: number; invokeCount: number; successCount: number; failCount: number }[]
+  dailyStats: [] as { date: string; activeUsers: number; pageViews: number; invokeCount: number; successCount: number; failCount: number; successRate: number }[],
+  prevTotalApis: 0,
+  prevTotalUsers: 0,
+  prevTotalOrders: 0,
+  prevTotalRevenue: 0,
+  prevDailyActiveUsers: 0,
+  prevDailyPageViews: 0
 })
 
 const formatDate = (date: Date): string => {
@@ -118,16 +149,37 @@ const formatDate = (date: Date): string => {
   return `${year}-${month}-${day}`
 }
 
+const handleTimeRangeChange = () => {
+  fetchStatistics()
+}
+
+const fetchApiTypes = async () => {
+  try {
+    const res = await adminApi.getAllApiTypes()
+    apiTypes.value = res.data
+  } catch (error) {
+    console.error('获取API分类失败:', error)
+  }
+}
+
 const fetchStatistics = async () => {
   try {
-    const params: { startDate?: string; endDate?: string; apiName?: string } = {}
-    if (dateRange.value && dateRange.value[0] && dateRange.value[1]) {
-      params.startDate = formatDate(dateRange.value[0])
-      params.endDate = formatDate(dateRange.value[1])
+    const params: { startDate?: string; endDate?: string; apiName?: string; typeId?: number; timeRange?: string } = {}
+    
+    if (timeRangeValue.value.timeRange === 'custom' && timeRangeValue.value.startDate && timeRangeValue.value.endDate) {
+      params.startDate = formatDate(timeRangeValue.value.startDate)
+      params.endDate = formatDate(timeRangeValue.value.endDate)
+    } else if (timeRangeValue.value.timeRange) {
+      params.timeRange = timeRangeValue.value.timeRange
     }
+    
     if (apiNameFilter.value) {
       params.apiName = apiNameFilter.value
     }
+    if (typeIdFilter.value) {
+      params.typeId = typeIdFilter.value
+    }
+    
     const res = await adminApi.getStatistics(params)
     statistics.value = res.data
     initCharts()
@@ -144,22 +196,31 @@ const initCharts = () => {
   
   const dailyStats = statistics.value.dailyStats || []
   const dates = dailyStats.map(s => s.date)
-  const activeUsers = dailyStats.map(s => s.activeUsers || 0)
-  const pageViews = dailyStats.map(s => s.pageViews || s.invokeCount || 0)
-  const invokeCounts = dailyStats.map(s => s.invokeCount || 0)
-  const successCounts = dailyStats.map(s => s.successCount || 0)
+  
+  const seriesMap: Record<string, { name: string; data: number[]; color: string }> = {
+    activeUsers: { name: '活跃用户', data: dailyStats.map(s => s.activeUsers || 0), color: '#1E40AF' },
+    invokeCount: { name: '调用次数', data: dailyStats.map(s => s.invokeCount || 0), color: '#F59E0B' },
+    successCount: { name: '成功次数', data: dailyStats.map(s => s.successCount || 0), color: '#22C55E' },
+    failCount: { name: '失败次数', data: dailyStats.map(s => s.failCount || 0), color: '#EF4444' },
+    successRate: { name: '成功率(%)', data: dailyStats.map(s => s.successRate || 0), color: '#EC4899' }
+  }
+  
+  const series = selectedIndicators.value
+    .filter(key => seriesMap[key])
+    .map(key => ({
+      name: seriesMap[key].name,
+      type: 'line',
+      smooth: true,
+      data: seriesMap[key].data,
+      itemStyle: { color: seriesMap[key].color }
+    }))
   
   lineChart.setOption({
     tooltip: { trigger: 'axis' },
-    legend: { data: ['活跃用户', '页面访问量', '调用次数', '成功次数'] },
+    legend: { data: series.map(s => s.name) },
     xAxis: { type: 'category', data: dates },
     yAxis: { type: 'value' },
-    series: [
-      { name: '活跃用户', type: 'line', smooth: true, data: activeUsers, itemStyle: { color: '#1E40AF' } },
-      { name: '页面访问量', type: 'line', smooth: true, data: pageViews, itemStyle: { color: '#22C55E' } },
-      { name: '调用次数', type: 'line', smooth: true, data: invokeCounts, itemStyle: { color: '#F59E0B' } },
-      { name: '成功次数', type: 'line', smooth: true, data: successCounts, itemStyle: { color: '#EC4899' } }
-    ]
+    series
   })
   
   const ranking = statistics.value.apiCallRanking || []
@@ -181,12 +242,19 @@ const initCharts = () => {
   })
 }
 
+watch(selectedIndicators, () => {
+  if (lineChart) {
+    initCharts()
+  }
+})
+
 const handleResize = () => {
   lineChart?.resize()
   barChart?.resize()
 }
 
 onMounted(() => {
+  fetchApiTypes()
   fetchStatistics()
   window.addEventListener('resize', handleResize)
 })
@@ -212,42 +280,23 @@ onUnmounted(() => {
   margin-bottom: 24px;
 }
 
-.stat-card {
-  background: #fff;
-  border-radius: 12px;
-  padding: 24px;
-  display: flex;
-  align-items: center;
-  gap: 16px;
-}
-
-.stat-icon {
-  width: 64px;
-  height: 64px;
-  border-radius: 12px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.stat-info {
-  display: flex;
-  flex-direction: column;
-}
-
-.stat-value {
-  font-size: 28px;
-  font-weight: 700;
-  color: #1E3A8A;
-}
-
-.stat-label {
-  font-size: 14px;
-  color: #64748B;
-}
-
 .chart-section {
   margin-bottom: 24px;
+}
+
+.chart-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.section-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #1E3A8A;
+  margin: 0 0 16px 0;
 }
 
 .chart-container {

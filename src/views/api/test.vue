@@ -8,10 +8,13 @@
     
     <div class="test-content">
       <div class="test-form card">
-        <h2 class="section-title">API测试</h2>
-        <div class="api-info">
-          <el-tag :type="getMethodType(api.method)">{{ api.method }}</el-tag>
-          <code>{{ api.endpoint }}</code>
+        <div class="api-header-section">
+          <h2 class="api-title">{{ api.name || 'API测试' }}</h2>
+          <div class="api-info">
+            <el-tag type="primary">{{ api.typeName }}</el-tag>
+            <span class="api-method">{{ api.method }}</span>
+            <code>{{ api.endpoint }}</code>
+          </div>
         </div>
         
         <el-form :model="testForm" label-width="100px">
@@ -60,6 +63,20 @@
       </div>
     </div>
     
+    <div class="response-example card" v-if="api.responseParams && api.responseParams.length > 0">
+      <h3 class="section-title">返回参数示例</h3>
+      <el-table :data="api.responseParams" border>
+        <el-table-column prop="name" label="字段名" width="150" />
+        <el-table-column prop="type" label="类型" width="100" />
+        <el-table-column prop="description" label="说明" />
+        <el-table-column prop="example" label="示例值" width="150" />
+      </el-table>
+      <div class="example-json" v-if="responseExample">
+        <h4>示例JSON</h4>
+        <pre>{{ responseExample }}</pre>
+      </div>
+    </div>
+    
     <div class="test-records card" v-if="records.length > 0">
       <h3 class="section-title">测试记录</h3>
       <el-table :data="records" border>
@@ -87,7 +104,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, computed, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { ArrowLeft, VideoPlay, Document } from '@element-plus/icons-vue'
@@ -271,6 +288,29 @@ const getMethodType = (method: string) => {
   return types[method] || 'info'
 }
 
+const responseExample = computed(() => {
+  if (!api.value.responseParams || api.value.responseParams.length === 0) {
+    return null
+  }
+  const example: Record<string, any> = {}
+  api.value.responseParams.forEach(param => {
+    example[param.name] = param.example || getDefaultExample(param.type)
+  })
+  return JSON.stringify({ code: 200, message: 'success', data: example }, null, 2)
+})
+
+const getDefaultExample = (type: string) => {
+  switch (type.toLowerCase()) {
+    case 'string': return '示例字符串'
+    case 'number':
+    case 'integer': return 0
+    case 'boolean': return true
+    case 'array': return []
+    case 'object': return {}
+    default: return null
+  }
+}
+
 onMounted(() => {
   fetchApiDetail()
 })
@@ -293,11 +333,27 @@ onMounted(() => {
   margin-bottom: 24px;
 }
 
+.api-header-section {
+  margin-bottom: 20px;
+}
+
+.api-title {
+  font-size: 22px;
+  font-weight: 600;
+  color: #1E3A8A;
+  margin-bottom: 12px;
+}
+
+.api-method {
+  font-size: 13px;
+  color: #475569;
+  font-weight: 600;
+}
+
 .api-info {
   display: flex;
   align-items: center;
   gap: 12px;
-  margin-bottom: 24px;
   padding: 12px 16px;
   background: #F1F5F9;
   border-radius: 8px;
@@ -350,6 +406,39 @@ onMounted(() => {
 
 .test-records {
   margin-top: 24px;
+}
+
+.response-example {
+  margin-bottom: 24px;
+}
+
+.response-example .section-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #1E3A8A;
+  margin-bottom: 16px;
+}
+
+.example-json {
+  margin-top: 16px;
+}
+
+.example-json h4 {
+  font-size: 14px;
+  font-weight: 500;
+  color: #475569;
+  margin-bottom: 8px;
+}
+
+.example-json pre {
+  background: #1E293B;
+  border-radius: 8px;
+  padding: 16px;
+  margin: 0;
+  color: #E2E8F0;
+  font-size: 13px;
+  line-height: 1.6;
+  overflow-x: auto;
 }
 
 @media (max-width: 1024px) {

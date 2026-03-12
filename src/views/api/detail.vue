@@ -10,7 +10,8 @@
       <div class="main-info card">
         <div class="api-header">
           <div class="header-left">
-            <el-tag :type="getMethodType(api.method)" size="large">{{ api.method }}</el-tag>
+            <el-tag type="primary" size="large">{{ api.typeName }}</el-tag>
+            <span class="api-method-large">{{ api.method }}</span>
             <h1>{{ api.name }}</h1>
           </div>
           <div class="header-right">
@@ -38,7 +39,8 @@
         <div class="api-endpoint">
           <h3>接口地址</h3>
           <div class="endpoint-box">
-            <el-tag :type="getMethodType(api.method)">{{ api.method }}</el-tag>
+            <el-tag type="primary">{{ api.typeName }}</el-tag>
+            <span class="endpoint-method">{{ api.method }}</span>
             <code>{{ baseUrl }}{{ api.endpoint }}</code>
             <el-button text @click="copyEndpoint">
               <el-icon><CopyDocument /></el-icon>
@@ -336,6 +338,12 @@ onMounted(() => {
   color: #1E3A8A;
 }
 
+.api-method-large {
+  font-size: 14px;
+  color: #475569;
+  font-weight: 600;
+}
+
 .header-right {
   display: flex;
   gap: 12px;
@@ -384,6 +392,12 @@ onMounted(() => {
 .endpoint-box code {
   font-size: 14px;
   color: #1E40AF;
+}
+
+.endpoint-method {
+  font-size: 13px;
+  color: #475569;
+  font-weight: 600;
 }
 
 .info-tabs {

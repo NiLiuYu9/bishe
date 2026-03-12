@@ -46,6 +46,22 @@ export const useUserStore = defineStore('user', () => {
     return res
   }
 
+  async function validateSession(): Promise<boolean> {
+    try {
+      const res = await authApi.getUserInfo()
+      if (res.data) {
+        userInfo.value = res.data as UserInfo
+        saveToStorage()
+        return true
+      }
+      return false
+    } catch (error) {
+      userInfo.value = null
+      clearStorage()
+      return false
+    }
+  }
+
   function saveToStorage() {
     if (userInfo.value) {
       localStorage.setItem('userInfo', JSON.stringify(userInfo.value))
@@ -78,6 +94,7 @@ export const useUserStore = defineStore('user', () => {
     logout,
     getUserInfo,
     updateUserInfo,
-    loadFromStorage
+    loadFromStorage,
+    validateSession
   }
 })

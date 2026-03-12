@@ -43,6 +43,18 @@
           </div>
         </div>
       </div>
+      
+      <div v-if="total > 0" class="pagination-container">
+        <el-pagination
+          v-model:current-page="pageNum"
+          v-model:page-size="pageSize"
+          :page-sizes="[10, 20, 50]"
+          :total="total"
+          layout="total, sizes, prev, pager, next, jumper"
+          @size-change="handleSizeChange"
+          @current-change="handleCurrentChange"
+        />
+      </div>
     </div>
     
     <el-dialog v-model="showCreateDialog" :title="editingReq ? '编辑需求' : '发布需求'" width="900px">
@@ -176,6 +188,9 @@ const editingReq = ref<Requirement | null>(null)
 const formRef = ref<FormInstance>()
 
 const requirements = ref<Requirement[]>([])
+const total = ref(0)
+const pageNum = ref(1)
+const pageSize = ref(10)
 
 const reqForm = reactive<RequirementCreateParams>({
   title: '',
@@ -243,55 +258,36 @@ const removeResponseParam = (index: number) => {
   reqForm.responseParams.splice(index, 1)
 }
 
-const mockRequirements: Requirement[] = [
-  {
-    id: 1,
-    title: '需要一个企业信息查询API',
-    description: '需要根据企业名称或统一社会信用代码查询企业基本信息，包括注册资本、法人代表、经营范围等',
-    requestParams: [],
-    responseParams: [],
-    budget: 500,
-    deadline: '2024-02-01',
-    userId: 1,
-    username: 'user1',
-    status: 'open',
-    applicants: [],
-    createTime: '2024-01-15',
-    updateTime: '2024-01-15'
-  },
-  {
-    id: 2,
-    title: '图片水印添加API',
-    description: '需要给图片添加文字或图片水印，支持批量处理',
-    requestParams: [],
-    responseParams: [],
-    budget: 300,
-    deadline: '2024-01-30',
-    userId: 1,
-    username: 'user1',
-    status: 'in_progress',
-    applicants: [],
-    createTime: '2024-01-10',
-    updateTime: '2024-01-12'
-  }
-]
-
 const fetchRequirements = async () => {
   loading.value = true
   try {
     const res = activeTab.value === 'published' 
-      ? await requirementApi.getMyRequirements({ pageNum: 1, pageSize: 20 })
-      : await requirementApi.getMyRequirements({ pageNum: 1, pageSize: 20, status: 'applied' })
+      ? await requirementApi.getMyRequirements({ pageNum: pageNum.value, pageSize: pageSize.value })
+      : await requirementApi.getMyRequirements({ pageNum: pageNum.value, pageSize: pageSize.value, status: 'applied' })
     requirements.value = res.data.list
+    total.value = res.data.total
   } catch (error) {
     console.error('获取需求列表失败:', error)
-    requirements.value = mockRequirements
+    requirements.value = []
+    total.value = 0
   } finally {
     loading.value = false
   }
 }
 
+const handleSizeChange = (val: number) => {
+  pageSize.value = val
+  pageNum.value = 1
+  fetchRequirements()
+}
+
+const handleCurrentChange = (val: number) => {
+  pageNum.value = val
+  fetchRequirements()
+}
+
 const handleTabChange = () => {
+  pageNum.value = 1
   fetchRequirements()
 }
 
@@ -490,5 +486,11 @@ onMounted(() => {
   padding: 8px;
   background: #f8fafc;
   border-radius: 4px;
+}
+
+.pagination-container {
+  margin-top: 20px;
+  display: flex;
+  justify-content: flex-end;
 }
 </style>

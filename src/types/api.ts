@@ -64,7 +64,11 @@ export interface ApiStatistics {
     invokeCount: number
     successCount: number
     failCount: number
+    successRate: number
   }[]
+  prevInvokeCount: number
+  prevSuccessCount: number
+  prevFailCount: number
 }
 
 export interface ApiType {

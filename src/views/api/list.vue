@@ -2,7 +2,7 @@
   <div class="api-list-page">
     <div class="page-header">
       <h1 class="page-title">API市场</h1>
-      <el-button type="primary" @click="router.push('/user/my-apis')" v-if="userStore.isLoggedIn">
+      <el-button type="primary" @click="showCreateDialog = true" v-if="userStore.isLoggedIn">
         <el-icon><Plus /></el-icon> 上架API
       </el-button>
     </div>
@@ -51,8 +51,8 @@
           @click="goToDetail(api.id)"
         >
           <div class="api-header">
-            <el-tag :type="getMethodType(api.method)">{{ api.method }}</el-tag>
-            <span class="api-type-name">{{ api.typeName }}</span>
+            <el-tag type="primary">{{ api.typeName }}</el-tag>
+            <span class="api-method">{{ api.method }}</span>
           </div>
           <h3 class="api-name">{{ api.name }}</h3>
           <p class="api-desc">{{ api.description }}</p>
@@ -88,6 +88,8 @@
         />
       </div>
     </div>
+    
+    <ApiCreateDialog v-model="showCreateDialog" :types="types" @success="fetchApiList" />
   </div>
 </template>
 
@@ -98,6 +100,7 @@ import { Plus, View, Star } from '@element-plus/icons-vue'
 import { useUserStore } from '@/stores/user'
 import { apiManagement } from '@/api/api'
 import type { ApiItem, ApiType } from '@/types/api'
+import ApiCreateDialog from '@/components/ApiCreateDialog.vue'
 
 const router = useRouter()
 const route = useRoute()
@@ -111,7 +114,7 @@ const types = ref<ApiType[]>([])
 
 const filters = reactive({
   keyword: '',
-  typeId: '',
+  typeId: '' as number | '',
   sortBy: ''
 })
 
@@ -119,6 +122,8 @@ const pagination = reactive({
   page: 1,
   pageSize: 12
 })
+
+const showCreateDialog = ref(false)
 
 const fetchTypes = async () => {
   try {
@@ -133,13 +138,14 @@ const fetchTypes = async () => {
 const fetchApiList = async () => {
   loading.value = true
   try {
+    const sortParts = filters.sortBy ? filters.sortBy.split('_') : []
     const res = await apiManagement.getList({
       pageNum: pagination.page,
       pageSize: pagination.pageSize,
       keyword: filters.keyword,
-      typeId: filters.typeId ? Number(filters.typeId) : undefined,
-      sortBy: filters.sortBy.split('_')[0] as any,
-      sortOrder: filters.sortBy.split('_')[1] as any
+      typeId: filters.typeId || undefined,
+      sortBy: sortParts[0] || undefined,
+      sortOrder: sortParts[1] || undefined
     })
     apiList.value = res.data.list || []
     total.value = res.data.total || 0
@@ -206,7 +212,7 @@ onMounted(() => {
     filters.keyword = route.query.keyword as string
   }
   if (route.query.typeId) {
-    filters.typeId = route.query.typeId as string
+    filters.typeId = Number(route.query.typeId)
   }
   fetchTypes()
   fetchApiList()
@@ -260,9 +266,10 @@ onMounted(() => {
   margin-bottom: 12px;
 }
 
-.api-type-name {
+.api-method {
   font-size: 12px;
   color: #475569;
+  font-weight: 500;
 }
 
 .api-name {

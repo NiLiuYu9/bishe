@@ -105,8 +105,7 @@ const routes: RouteRecordRaw[] = [
     path: '/admin',
     name: 'Admin',
     component: () => import('@/layouts/AdminLayout.vue'),
-    // TODO: 临时移除管理员权限检查，后续需要恢复 requiresAdmin: true
-    meta: { title: '管理后台', requiresAuth: true },
+    meta: { title: '管理后台', requiresAuth: true, requiresAdmin: true },
     children: [
       {
         path: '',
@@ -170,21 +169,32 @@ router.beforeEach(async (to, _from, next) => {
   
   const userStore = useUserStore()
   
+  if (userStore.isLoggedIn) {
+    if (to.name === 'Login' || to.name === 'Register') {
+      next({ name: 'Home' })
+      return
+    }
+  } else {
+    const stored = localStorage.getItem('userInfo')
+    if (stored && to.meta.requiresAuth) {
+      const isValid = await userStore.validateSession()
+      if (!isValid) {
+        next({ name: 'Login', query: { redirect: to.fullPath } })
+        return
+      }
+    }
+  }
+  
   if (to.meta.requiresAuth && !userStore.isLoggedIn) {
     next({ name: 'Login', query: { redirect: to.fullPath } })
     return
   }
   
-  // TODO: 临时注释管理员权限检查，后续需要恢复  // if (to.meta.requiresAdmin) {
-  //   if (userStore.userInfo && (userStore.userInfo as any).role !== 'admin') {
-  //     next({ name: 'Home' })
-  //     return
-  //   }
-  // }
-  
-  if ((to.name === 'Login' || to.name === 'Register') && userStore.isLoggedIn) {
-    next({ name: 'Home' })
-    return
+  if (to.meta.requiresAdmin) {
+    if (!userStore.userInfo || userStore.userInfo.isAdmin !== 1) {
+      next({ name: 'Home' })
+      return
+    }
   }
   
   next()

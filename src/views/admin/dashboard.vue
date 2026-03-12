@@ -1,51 +1,58 @@
 <template>
   <div class="admin-dashboard">
+    <div class="filter-section">
+      <TimeRangeSelector v-model="timeRangeValue" @update:model-value="handleTimeRangeChange" />
+    </div>
+    
     <div class="stats-cards">
-      <div class="stat-card">
-        <div class="stat-icon" style="background: #DBEAFE;">
-          <el-icon :size="28" style="color: #1E40AF;"><Box /></el-icon>
-        </div>
-        <div class="stat-info">
-          <span class="stat-value">{{ statistics.totalApis }}</span>
-          <span class="stat-label">API总数</span>
-        </div>
-      </div>
+      <StatsCard
+        :value="statistics.totalApis"
+        :prev-value="statistics.prevTotalApis"
+        label="API总数"
+        :icon="Box"
+        icon-bg-color="#DBEAFE"
+        icon-color="#1E40AF"
+      />
       
-      <div class="stat-card">
-        <div class="stat-icon" style="background: #DCFCE7;">
-          <el-icon :size="28" style="color: #16A34A;"><User /></el-icon>
-        </div>
-        <div class="stat-info">
-          <span class="stat-value">{{ statistics.totalUsers }}</span>
-          <span class="stat-label">用户总数</span>
-        </div>
-      </div>
+      <StatsCard
+        :value="statistics.totalUsers"
+        :prev-value="statistics.prevTotalUsers"
+        label="用户总数"
+        :icon="User"
+        icon-bg-color="#DCFCE7"
+        icon-color="#16A34A"
+      />
       
-      <div class="stat-card">
-        <div class="stat-icon" style="background: #FEF3C7;">
-          <el-icon :size="28" style="color: #D97706;"><List /></el-icon>
-        </div>
-        <div class="stat-info">
-          <span class="stat-value">{{ statistics.totalOrders }}</span>
-          <span class="stat-label">订单总数</span>
-        </div>
-      </div>
+      <StatsCard
+        :value="statistics.totalOrders"
+        :prev-value="statistics.prevTotalOrders"
+        label="订单总数"
+        :icon="List"
+        icon-bg-color="#FEF3C7"
+        icon-color="#D97706"
+      />
       
-      <div class="stat-card">
-        <div class="stat-icon" style="background: #FCE7F3;">
-          <el-icon :size="28" style="color: #DB2777;"><Money /></el-icon>
-        </div>
-        <div class="stat-info">
-          <span class="stat-value">¥{{ statistics.totalRevenue }}</span>
-          <span class="stat-label">总收入</span>
-        </div>
-      </div>
+      <StatsCard
+        :value="statistics.totalRevenue"
+        :prev-value="statistics.prevTotalRevenue"
+        label="总收入"
+        :icon="Money"
+        icon-bg-color="#FCE7F3"
+        icon-color="#DB2777"
+        prefix="¥"
+      />
     </div>
     
     <el-row :gutter="24">
       <el-col :span="16">
         <div class="chart-section card">
-          <h3 class="section-title">平台数据趋势</h3>
+          <div class="chart-header">
+            <h3 class="section-title">平台数据趋势</h3>
+            <IndicatorSelector
+              v-model="selectedIndicators"
+              :indicators="dashboardIndicators"
+            />
+          </div>
           <div ref="lineChartRef" class="chart-container"></div>
         </div>
       </el-col>
@@ -97,11 +104,14 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref, onMounted, onUnmounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { Box, User, List, Money } from '@element-plus/icons-vue'
 import { adminApi } from '@/api/admin'
 import * as echarts from 'echarts'
+import TimeRangeSelector from '@/components/statistics/TimeRangeSelector.vue'
+import StatsCard from '@/components/statistics/StatsCard.vue'
+import IndicatorSelector from '@/components/statistics/IndicatorSelector.vue'
 
 const router = useRouter()
 
@@ -109,6 +119,19 @@ const lineChartRef = ref<HTMLElement>()
 const barChartRef = ref<HTMLElement>()
 let lineChart: echarts.ECharts | null = null
 let barChart: echarts.ECharts | null = null
+
+const timeRangeValue = ref<{ timeRange?: string; startDate?: Date; endDate?: Date }>({
+  timeRange: 'last7days'
+})
+
+const selectedIndicators = ref<string[]>(['activeUsers', 'pageViews'])
+
+const dashboardIndicators = [
+  { label: '活跃用户', value: 'activeUsers' },
+  { label: '调用次数', value: 'invokeCount' },
+  { label: '成功次数', value: 'successCount' },
+  { label: '失败次数', value: 'failCount' }
+]
 
 const statistics = ref({
   totalApis: 0,
@@ -118,7 +141,13 @@ const statistics = ref({
   dailyActiveUsers: 0,
   dailyPageViews: 0,
   apiCallRanking: [] as { apiId: number; apiName: string; invokeCount: number }[],
-  dailyStats: [] as { date: string; activeUsers: number; pageViews: number; newUsers: number; newOrders: number }[]
+  dailyStats: [] as { date: string; activeUsers: number; pageViews: number; invokeCount: number; successCount: number; failCount: number }[],
+  prevTotalApis: 0,
+  prevTotalUsers: 0,
+  prevTotalOrders: 0,
+  prevTotalRevenue: 0,
+  prevDailyActiveUsers: 0,
+  prevDailyPageViews: 0
 })
 
 const pendingApis = ref<{ id: number; name: string; username: string; createTime: string }[]>([])
@@ -132,17 +161,27 @@ const formatDate = (date: Date): string => {
   return `${year}-${month}-${day}`
 }
 
+const handleTimeRangeChange = () => {
+  fetchStatistics()
+}
+
 const fetchStatistics = async () => {
   try {
-    const res = await adminApi.getStatistics({
-      startDate: formatDate(new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)),
-      endDate: formatDate(new Date())
-    })
+    const params: { startDate?: string; endDate?: string; timeRange?: string } = {}
+    
+    if (timeRangeValue.value.timeRange === 'custom' && timeRangeValue.value.startDate && timeRangeValue.value.endDate) {
+      params.startDate = formatDate(timeRangeValue.value.startDate)
+      params.endDate = formatDate(timeRangeValue.value.endDate)
+    } else if (timeRangeValue.value.timeRange) {
+      params.timeRange = timeRangeValue.value.timeRange
+    }
+    
+    const res = await adminApi.getStatistics(params)
     statistics.value = res.data
+    initCharts()
   } catch (error) {
     console.error('获取统计数据失败:', error)
   }
-  initCharts()
 }
 
 const fetchPendingApis = async () => {
@@ -188,30 +227,31 @@ const initCharts = () => {
     }
     return item.date
   })
-  const activeUsers = dailyStats.map((item: any) => item.activeUsers || 0)
-  const pageViews = dailyStats.map((item: any) => item.pageViews || 0)
+  
+  const seriesMap: Record<string, { name: string; data: number[]; color: string }> = {
+    activeUsers: { name: '活跃用户', data: dailyStats.map((item: any) => item.activeUsers || 0), color: '#1E40AF' },
+    pageViews: { name: '页面访问量', data: dailyStats.map((item: any) => item.pageViews || item.invokeCount || 0), color: '#22C55E' },
+    invokeCount: { name: '调用次数', data: dailyStats.map((item: any) => item.invokeCount || 0), color: '#F59E0B' },
+    successCount: { name: '成功次数', data: dailyStats.map((item: any) => item.successCount || 0), color: '#EC4899' },
+    failCount: { name: '失败次数', data: dailyStats.map((item: any) => item.failCount || 0), color: '#EF4444' }
+  }
+  
+  const series = selectedIndicators.value
+    .filter(key => seriesMap[key])
+    .map(key => ({
+      name: seriesMap[key].name,
+      type: 'line',
+      smooth: true,
+      data: seriesMap[key].data,
+      itemStyle: { color: seriesMap[key].color }
+    }))
   
   lineChart.setOption({
     tooltip: { trigger: 'axis' },
-    legend: { data: ['活跃用户', '页面访问量'] },
+    legend: { data: series.map(s => s.name) },
     xAxis: { type: 'category', data: dates },
     yAxis: { type: 'value' },
-    series: [
-      {
-        name: '活跃用户',
-        type: 'line',
-        smooth: true,
-        data: activeUsers,
-        itemStyle: { color: '#1E40AF' }
-      },
-      {
-        name: '页面访问量',
-        type: 'line',
-        smooth: true,
-        data: pageViews,
-        itemStyle: { color: '#22C55E' }
-      }
-    ]
+    series
   })
   
   const ranking = statistics.value.apiCallRanking || []
@@ -232,6 +272,12 @@ const initCharts = () => {
     }]
   })
 }
+
+watch(selectedIndicators, () => {
+  if (lineChart) {
+    initCharts()
+  }
+})
 
 const goToAudit = (api: any) => {
   router.push('/admin/apis')
@@ -279,6 +325,10 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
+.filter-section {
+  margin-bottom: 24px;
+}
+
 .stats-cards {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -286,46 +336,31 @@ onUnmounted(() => {
   margin-bottom: 24px;
 }
 
-.stat-card {
-  background: #fff;
-  border-radius: 12px;
-  padding: 24px;
-  display: flex;
-  align-items: center;
-  gap: 16px;
-}
-
-.stat-icon {
-  width: 64px;
-  height: 64px;
-  border-radius: 12px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.stat-info {
-  display: flex;
-  flex-direction: column;
-}
-
-.stat-value {
-  font-size: 28px;
-  font-weight: 700;
-  color: #1E3A8A;
-}
-
-.stat-label {
-  font-size: 14px;
-  color: #64748B;
-}
-
 .chart-section {
   margin-bottom: 24px;
 }
 
+.chart-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.section-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #1E3A8A;
+  margin: 0 0 16px 0;
+}
+
 .chart-container {
   height: 300px;
+}
+
+.mt-24 {
+  margin-top: 24px;
 }
 
 @media (max-width: 1200px) {
