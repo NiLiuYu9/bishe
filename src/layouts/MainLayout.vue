@@ -129,12 +129,13 @@ const handleCommand = (command: string) => {
 }
 
 .header-content {
-  max-width: 1400px;
+  max-width: 1700px;
   margin: 0 auto;
   height: 100%;
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 20px;
 }
 
 .logo {
@@ -152,7 +153,10 @@ const handleCommand = (command: string) => {
 
 .nav-menu {
   display: flex;
-  gap: 32px;
+  gap: 16px;
+  flex-wrap: nowrap;
+  white-space: nowrap;
+  flex-shrink: 1;
 }
 
 .nav-item {
@@ -160,6 +164,7 @@ const handleCommand = (command: string) => {
   text-decoration: none;
   font-weight: 500;
   transition: color 0.2s;
+  font-size: 17px;
 }
 
 .nav-item:hover,
@@ -174,7 +179,8 @@ const handleCommand = (command: string) => {
 }
 
 .search-input {
-  width: 240px;
+  width: 140px;
+  flex-shrink: 0;
 }
 
 .user-info {
