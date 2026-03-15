@@ -2,9 +2,6 @@
   <div class="admin-users-page">
     <div class="page-header">
       <h2 class="page-title">用户管理</h2>
-      <el-button @click="exportUsers">
-        <el-icon><Download /></el-icon> 导出数据
-      </el-button>
     </div>
     
     <div class="filter-section card">
@@ -113,7 +110,6 @@
 <script setup lang="ts">
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
-import { Download } from '@element-plus/icons-vue'
 import { adminApi } from '@/api/admin'
 import type { User } from '@/types'
 
@@ -203,10 +199,6 @@ const unfreezeUser = async (user: User) => {
     console.error('解冻失败:', error)
     ElMessage.error('解冻失败')
   }
-}
-
-const exportUsers = () => {
-  ElMessage.info('导出功能开发中')
 }
 
 onMounted(() => {

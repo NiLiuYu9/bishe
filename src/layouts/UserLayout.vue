@@ -11,6 +11,10 @@
             <el-icon><Box /></el-icon>
             <span>我的API</span>
           </el-menu-item>
+          <el-menu-item index="/user/favorites">
+            <el-icon><Star /></el-icon>
+            <span>我的收藏</span>
+          </el-menu-item>
           <el-menu-item index="/user/orders">
             <el-icon><List /></el-icon>
             <span>我的订单</span>
@@ -43,7 +47,7 @@
 
 <script setup lang="ts">
 import { useRoute } from 'vue-router'
-import { Box, List, Odometer, Document, DataLine, User } from '@element-plus/icons-vue'
+import { Box, List, Odometer, Document, DataLine, User, Star } from '@element-plus/icons-vue'
 
 const route = useRoute()
 </script>

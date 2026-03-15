@@ -1,5 +1,5 @@
 import { request, apiEndpoints } from '@/utils/request'
-import type { Order, OrderCreateParams, EvaluateParams } from '@/types/trade'
+import type { Order, OrderCreateParams } from '@/types/trade'
 
 export const tradeApi = {
   purchase(data: OrderCreateParams) {
@@ -26,7 +26,7 @@ export const tradeApi = {
     return request.delete<void>(`${apiEndpoints.trade.delete}/${id}`)
   },
 
-  evaluate(data: EvaluateParams) {
-    return request.post(apiEndpoints.trade.evaluate, data)
+  evaluate(id: string | number, rating: number) {
+    return request.post<void>(`${apiEndpoints.trade.evaluate}/${id}`, { rating })
   }
 }

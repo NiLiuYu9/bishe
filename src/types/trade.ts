@@ -11,6 +11,7 @@ export interface Order {
   createTime: string
   payTime: string
   completeTime: string
+  rating?: number
 }
 
 export interface OrderCreateParams {

@@ -21,6 +21,7 @@ export interface ApiItem {
   invokeCount: number
   successCount: number
   failCount: number
+  isFavorited?: boolean
 }
 
 export interface ApiParam {

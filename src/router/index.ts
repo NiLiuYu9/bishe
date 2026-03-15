@@ -56,6 +56,12 @@ const routes: RouteRecordRaw[] = [
             meta: { title: '我的API' }
           },
           {
+            path: 'favorites',
+            name: 'MyFavorites',
+            component: () => import('@/views/user/favorites.vue'),
+            meta: { title: '我的收藏' }
+          },
+          {
             path: 'orders',
             name: 'MyOrders',
             component: () => import('@/views/user/orders.vue'),

@@ -36,13 +36,19 @@ export const apiEndpoints = {
     myApiInvokeStatistics: '/api/statistics/my-api-invoke',
     apiTypes: '/api/api-types'
   },
+  favorite: {
+    add: '/api/favorite/add',
+    remove: '/api/favorite/remove',
+    check: '/api/favorite/check',
+    list: '/api/favorite/list'
+  },
   trade: {
     purchase: '/order/create',
     orders: '/order/list',
     orderDetail: '/order/detail',
     updateStatus: '/order/update-status',
     delete: '/order/delete',
-    evaluate: '/order/evaluate'
+    evaluate: '/order/rate'
   },
   test: {
     testCall: '/test/call',

@@ -70,3 +70,21 @@ export const apiManagement = {
     return request.get<{ list: ApiType[]; total: number }>(apiEndpoints.api.apiTypes, params)
   }
 }
+
+export const apiFavorite = {
+  add(apiId: number) {
+    return request.post(`${apiEndpoints.favorite.add}/${apiId}`)
+  },
+
+  remove(apiId: number) {
+    return request.delete(`${apiEndpoints.favorite.remove}/${apiId}`)
+  },
+
+  check(apiId: number) {
+    return request.get<boolean>(`${apiEndpoints.favorite.check}/${apiId}`)
+  },
+
+  getList(params?: { pageNum?: number; pageSize?: number }) {
+    return request.get<{ list: ApiItem[]; total: number }>(apiEndpoints.favorite.list, params)
+  }
+}

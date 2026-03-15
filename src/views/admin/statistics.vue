@@ -33,7 +33,7 @@
       <StatsCard
         :value="statistics.dailyActiveUsers"
         :prev-value="statistics.prevDailyActiveUsers"
-        label="日活用户"
+        label="日调用用户"
         :icon="User"
         icon-bg-color="#DBEAFE"
         icon-color="#1E40AF"
@@ -42,7 +42,7 @@
       <StatsCard
         :value="statistics.dailyPageViews"
         :prev-value="statistics.prevDailyPageViews"
-        label="日访问量"
+        label="日调用量"
         :icon="View"
         icon-bg-color="#DCFCE7"
         icon-color="#16A34A"
@@ -191,8 +191,19 @@ const fetchStatistics = async () => {
 const initCharts = () => {
   if (!lineChartRef.value || !barChartRef.value) return
   
-  lineChart = echarts.init(lineChartRef.value)
-  barChart = echarts.init(barChartRef.value)
+  if (!lineChart) {
+    lineChart = echarts.init(lineChartRef.value)
+  }
+  if (!barChart) {
+    barChart = echarts.init(barChartRef.value)
+  }
+  
+  updateLineChart()
+  updateBarChart()
+}
+
+const updateLineChart = () => {
+  if (!lineChart) return
   
   const dailyStats = statistics.value.dailyStats || []
   const dates = dailyStats.map(s => s.date)
@@ -221,7 +232,11 @@ const initCharts = () => {
     xAxis: { type: 'category', data: dates },
     yAxis: { type: 'value' },
     series
-  })
+  }, { notMerge: true })
+}
+
+const updateBarChart = () => {
+  if (!barChart) return
   
   const ranking = statistics.value.apiCallRanking || []
   const rankingNames = ranking.map(r => r.apiName)
@@ -243,10 +258,8 @@ const initCharts = () => {
 }
 
 watch(selectedIndicators, () => {
-  if (lineChart) {
-    initCharts()
-  }
-})
+  updateLineChart()
+}, { deep: true })
 
 const handleResize = () => {
   lineChart?.resize()

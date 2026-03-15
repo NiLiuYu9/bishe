@@ -5,7 +5,7 @@
     <el-tabs v-model="activeTab" @tab-change="handleTabChange">
       <el-tab-pane label="全部" name="all" />
       <el-tab-pane label="待付款" name="pending" />
-      <el-tab-pane label="已付款" name="paid" />
+      <el-tab-pane label="已完成" name="completed" />
       <el-tab-pane label="已退款" name="refunded" />
       <el-tab-pane label="已取消" name="cancelled" />
     </el-tabs>
@@ -36,6 +36,28 @@
             </div>
           </div>
           
+          <div class="order-rating" v-if="order.status === 'paid' || order.status === 'completed'">
+            <div class="rating-header">
+              <span class="rating-label">{{ order.rating ? '我的评分' : '给API评分' }}</span>
+              <span v-if="order === editingOrder" class="saving-indicator">
+                <el-icon class="is-loading"><Loading /></el-icon>
+                保存中...
+              </span>
+            </div>
+            <div class="rating-content">
+              <el-rate
+                v-model="order.rating"
+                :disabled="order.status !== 'paid' && order.status !== 'completed'"
+                :low-threshold="1"
+                :high-threshold="4"
+                :step="0.5"
+                show-score
+                text-color="#ff9900"
+                @change="(value) => handleRatingChange(order, value)"
+              />
+            </div>
+          </div>
+          
           <div class="order-footer">
             <el-button
               v-if="order.status === 'pending'"
@@ -45,16 +67,10 @@
               立即付款
             </el-button>
             <el-button
-              v-if="order.status === 'completed'"
+              v-if="order.status === 'paid' || order.status === 'completed'"
               @click="goToApi(order.apiId)"
             >
               查看API
-            </el-button>
-            <el-button
-              v-if="order.status === 'completed'"
-              @click="showEvaluateDialog(order)"
-            >
-              评价
             </el-button>
           </div>
         </div>
@@ -69,26 +85,6 @@
         />
       </div>
     </div>
-    
-    <el-dialog v-model="evaluateDialogVisible" title="评价API" width="500px">
-      <el-form :model="evaluateForm" label-width="80px">
-        <el-form-item label="评分">
-          <el-rate v-model="evaluateForm.rating" show-text />
-        </el-form-item>
-        <el-form-item label="评价内容">
-          <el-input
-            v-model="evaluateForm.content"
-            type="textarea"
-            :rows="4"
-            placeholder="请输入您的评价"
-          />
-        </el-form-item>
-      </el-form>
-      <template #footer>
-        <el-button @click="evaluateDialogVisible = false">取消</el-button>
-        <el-button type="primary" @click="submitEvaluate">提交评价</el-button>
-      </template>
-    </el-dialog>
   </div>
 </template>
 
@@ -96,6 +92,7 @@
 import { ref, reactive, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
+import { Loading } from '@element-plus/icons-vue'
 import { tradeApi } from '@/api/trade'
 import type { Order } from '@/types/trade'
 
@@ -105,14 +102,8 @@ const loading = ref(false)
 const activeTab = ref('all')
 const orders = ref<Order[]>([])
 const total = ref(0)
-
-const evaluateDialogVisible = ref(false)
-const currentOrder = ref<Order | null>(null)
-
-const evaluateForm = reactive({
-  rating: 5,
-  content: ''
-})
+const editingOrder = ref<Order | null>(null)
+const debounceTimer = ref<NodeJS.Timeout | null>(null)
 
 const pagination = reactive({
   page: 1,
@@ -155,7 +146,7 @@ watch(() => pagination.pageSize, () => {
 
 const handlePay = async (order: Order) => {
   try {
-    await tradeApi.updateOrderStatus(order.id, 'paid')
+    await tradeApi.updateOrderStatus(order.id, 'completed')
     ElMessage.success('支付成功')
     fetchOrders()
   } catch (error) {
@@ -168,29 +159,20 @@ const goToApi = (apiId: number) => {
   router.push(`/api/${apiId}`)
 }
 
-const showEvaluateDialog = (order: Order) => {
-  currentOrder.value = order
-  evaluateForm.rating = 5
-  evaluateForm.content = ''
-  evaluateDialogVisible.value = true
-}
-
-const submitEvaluate = async () => {
-  if (!currentOrder.value) return
+const handleRatingChange = async (order: Order, value: number) => {
+  if (!value || value < 0.5) return
+  
+  editingOrder.value = order
   
   try {
-    await tradeApi.evaluate({
-      orderId: currentOrder.value.id,
-      apiId: currentOrder.value.apiId,
-      rating: evaluateForm.rating,
-      content: evaluateForm.content
-    })
-    ElMessage.success('评价成功')
-    evaluateDialogVisible.value = false
-  } catch (error) {
-    console.error('评价失败:', error)
-    ElMessage.success('评价成功（模拟）')
-    evaluateDialogVisible.value = false
+    const ratingValue = Number(value)
+    await tradeApi.evaluate(order.id, ratingValue)
+    ElMessage.success('评分保存成功')
+  } catch (error: any) {
+    console.error('评分保存失败:', error)
+    ElMessage.error(error.message || '评分保存失败')
+  } finally {
+    editingOrder.value = null
   }
 }
 
@@ -237,6 +219,11 @@ onMounted(() => {
   border-radius: 12px;
   border: 1px solid #E2E8F0;
   overflow: hidden;
+  transition: all 0.2s;
+}
+
+.order-card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
 }
 
 .order-header {
@@ -300,12 +287,45 @@ onMounted(() => {
   color: #22C55E;
 }
 
+.order-rating {
+  padding: 16px 20px;
+  background: linear-gradient(135deg, #FFF7ED 0%, #FFEDD5 100%);
+  border-top: 1px solid #FED7AA;
+}
+
+.rating-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.rating-label {
+  font-size: 14px;
+  font-weight: 600;
+  color: #9A3412;
+}
+
+.saving-indicator {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  color: #EA580C;
+}
+
+.rating-content {
+  display: flex;
+  align-items: center;
+}
+
 .order-footer {
   display: flex;
   justify-content: flex-end;
   gap: 12px;
   padding: 16px 20px;
   border-top: 1px solid #E2E8F0;
+  background: #F8FAFC;
 }
 
 .pagination {

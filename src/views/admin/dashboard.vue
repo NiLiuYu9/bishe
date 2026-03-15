@@ -216,8 +216,19 @@ const fetchRecentOrders = async () => {
 const initCharts = () => {
   if (!lineChartRef.value || !barChartRef.value) return
   
-  lineChart = echarts.init(lineChartRef.value)
-  barChart = echarts.init(barChartRef.value)
+  if (!lineChart) {
+    lineChart = echarts.init(lineChartRef.value)
+  }
+  if (!barChart) {
+    barChart = echarts.init(barChartRef.value)
+  }
+  
+  updateLineChart()
+  updateBarChart()
+}
+
+const updateLineChart = () => {
+  if (!lineChart) return
   
   const dailyStats = statistics.value.dailyStats || []
   const dates = dailyStats.map((item: any) => {
@@ -252,7 +263,11 @@ const initCharts = () => {
     xAxis: { type: 'category', data: dates },
     yAxis: { type: 'value' },
     series
-  })
+  }, { notMerge: true })
+}
+
+const updateBarChart = () => {
+  if (!barChart) return
   
   const ranking = statistics.value.apiCallRanking || []
   const apiNames = ranking.map((item: any) => item.apiName || '未知API').reverse()
@@ -274,10 +289,8 @@ const initCharts = () => {
 }
 
 watch(selectedIndicators, () => {
-  if (lineChart) {
-    initCharts()
-  }
-})
+  updateLineChart()
+}, { deep: true })
 
 const goToAudit = (api: any) => {
   router.push('/admin/apis')

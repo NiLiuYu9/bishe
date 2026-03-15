@@ -1,88 +1,90 @@
 <template>
   <div class="requirement-list-page">
-    <div class="page-header">
-      <h1 class="page-title">需求广场</h1>
-      <el-button type="primary" @click="router.push('/user/my-requirements')" v-if="userStore.isLoggedIn">
-        <el-icon><Plus /></el-icon> 发布需求
-      </el-button>
-    </div>
-    
-    <div class="filter-section card">
-      <el-form :inline="true" :model="filters">
-        <el-form-item label="关键词">
-          <el-input v-model="filters.keyword" placeholder="搜索需求" clearable />
-        </el-form-item>
-        <el-form-item label="预算范围">
-          <el-col :span="11">
-            <el-input v-model.number="filters.minBudget" placeholder="最低" />
-          </el-col>
-          <el-col :span="2" style="text-align: center;">-</el-col>
-          <el-col :span="11">
-            <el-input v-model.number="filters.maxBudget" placeholder="最高" />
-          </el-col>
-        </el-form-item>
-        <el-form-item>
-          <el-button type="primary" @click="handleSearch">搜索</el-button>
-          <el-button @click="resetFilters">重置</el-button>
-        </el-form-item>
-      </el-form>
-    </div>
-    
-    <div class="requirements-list" v-loading="loading">
-      <div v-if="requirements.length === 0 && !loading" class="empty-state">
-        <el-empty description="暂无需求" />
+    <div class="page-content">
+      <div class="page-header">
+        <h1 class="page-title">需求广场</h1>
+        <el-button type="primary" @click="router.push('/user/my-requirements')" v-if="userStore.isLoggedIn">
+          <el-icon><Plus /></el-icon> 发布需求
+        </el-button>
       </div>
       
-      <div v-else class="requirement-cards">
-        <div v-for="req in requirements" :key="req.id" class="requirement-card" @click="goToDetail(req.id)">
-          <div class="req-header">
-            <h3>{{ req.title }}</h3>
-            <el-tag :type="getStatusType(req.status)">{{ getStatusText(req.status) }}</el-tag>
-          </div>
-          
-          <p class="req-desc">{{ req.description }}</p>
-          
-          <div class="req-meta">
-            <div class="req-info">
-              <span><el-icon><User /></el-icon> {{ req.username }}</span>
-              <span><el-icon><Money /></el-icon> ¥{{ req.budget }}</span>
-              <span><el-icon><Calendar /></el-icon> {{ req.deadline }}</span>
+      <div class="filter-section card">
+        <el-form :inline="true" :model="filters">
+          <el-form-item label="关键词">
+            <el-input v-model="filters.keyword" placeholder="搜索需求" clearable />
+          </el-form-item>
+          <el-form-item label="预算范围">
+            <el-col :span="11">
+              <el-input v-model.number="filters.minBudget" placeholder="最低" />
+            </el-col>
+            <el-col :span="2" style="text-align: center;">-</el-col>
+            <el-col :span="11">
+              <el-input v-model.number="filters.maxBudget" placeholder="最高" />
+            </el-col>
+          </el-form-item>
+          <el-form-item>
+            <el-button type="primary" @click="handleSearch">搜索</el-button>
+            <el-button @click="resetFilters">重置</el-button>
+          </el-form-item>
+        </el-form>
+      </div>
+      
+      <div class="requirements-list" v-loading="loading">
+        <div v-if="requirements.length === 0 && !loading" class="empty-state">
+          <el-empty description="暂无需求" />
+        </div>
+        
+        <div v-else class="requirement-cards">
+          <div v-for="req in requirements" :key="req.id" class="requirement-card" @click="goToDetail(req.id)">
+            <div class="req-header">
+              <h3>{{ req.title }}</h3>
+              <el-tag :type="getStatusType(req.status)">{{ getStatusText(req.status) }}</el-tag>
             </div>
-            <span class="time">{{ req.createTime }}</span>
+            
+            <p class="req-desc">{{ req.description }}</p>
+            
+            <div class="req-meta">
+              <div class="req-info">
+                <span><el-icon><User /></el-icon> {{ req.username }}</span>
+                <span><el-icon><Money /></el-icon> ¥{{ req.budget }}</span>
+                <span><el-icon><Calendar /></el-icon> {{ req.deadline }}</span>
+              </div>
+              <span class="time">{{ req.createTime }}</span>
+            </div>
+            
+            <div class="req-footer" v-if="req.status === 'open' && userStore.isLoggedIn">
+              <el-button type="primary" @click.stop="applyRequirement(req)">立即接单</el-button>
+            </div>
           </div>
-          
-          <div class="req-footer" v-if="req.status === 'open' && userStore.isLoggedIn">
-            <el-button type="primary" @click.stop="applyRequirement(req)">立即接单</el-button>
-          </div>
+        </div>
+        
+        <div class="pagination" v-if="total > 0">
+          <el-pagination
+            v-model:current-page="pagination.pageNum"
+            v-model:page-size="pagination.pageSize"
+            :total="total"
+            layout="total, sizes, prev, pager, next"
+          />
         </div>
       </div>
       
-      <div class="pagination" v-if="total > 0">
-        <el-pagination
-          v-model:current-page="pagination.pageNum"
-          v-model:page-size="pagination.pageSize"
-          :total="total"
-          layout="total, sizes, prev, pager, next"
-        />
-      </div>
+      <el-dialog v-model="applyDialogVisible" title="申请接单" width="500px">
+        <el-form :model="applyForm" label-width="80px">
+          <el-form-item label="自我介绍">
+            <el-input
+              v-model="applyForm.description"
+              type="textarea"
+              :rows="4"
+              placeholder="请介绍您的技术能力和开发经验"
+            />
+          </el-form-item>
+        </el-form>
+        <template #footer>
+          <el-button @click="applyDialogVisible = false">取消</el-button>
+          <el-button type="primary" @click="submitApply">提交申请</el-button>
+        </template>
+      </el-dialog>
     </div>
-    
-    <el-dialog v-model="applyDialogVisible" title="申请接单" width="500px">
-      <el-form :model="applyForm" label-width="80px">
-        <el-form-item label="自我介绍">
-          <el-input
-            v-model="applyForm.description"
-            type="textarea"
-            :rows="4"
-            placeholder="请介绍您的技术能力和开发经验"
-          />
-        </el-form-item>
-      </el-form>
-      <template #footer>
-        <el-button @click="applyDialogVisible = false">取消</el-button>
-        <el-button type="primary" @click="submitApply">提交申请</el-button>
-      </template>
-    </el-dialog>
   </div>
 </template>
 
@@ -92,8 +94,10 @@ import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { Plus, User, Money, Calendar } from '@element-plus/icons-vue'
 import { requirementApi } from '@/api/requirement'
+import { apiManagement } from '@/api/api'
 import { useUserStore } from '@/stores/user'
 import type { Requirement } from '@/types/requirement'
+import type { ApiType } from '@/types/api'
 
 const router = useRouter()
 const userStore = useUserStore()
@@ -101,6 +105,7 @@ const userStore = useUserStore()
 const loading = ref(false)
 const requirements = ref<Requirement[]>([])
 const total = ref(0)
+const types = ref<ApiType[]>([])
 
 const applyDialogVisible = ref(false)
 const currentReq = ref<Requirement | null>(null)
@@ -164,6 +169,15 @@ const mockRequirements: Requirement[] = [
     updateTime: '2024-01-12'
   }
 ]
+
+const fetchTypes = async () => {
+  try {
+    const res = await apiManagement.getApiTypes({ pageNum: 1, pageSize: 100 })
+    types.value = res.data.list
+  } catch (error) {
+    console.error('加载分类失败', error)
+  }
+}
 
 const fetchRequirements = async () => {
   loading.value = true
@@ -241,14 +255,20 @@ const getStatusText = (status: string) => {
 }
 
 onMounted(() => {
+  fetchTypes()
   fetchRequirements()
 })
 </script>
 
 <style scoped>
 .requirement-list-page {
-  max-width: 1200px;
-  margin: 0 auto;
+  display: flex;
+  min-height: calc(100vh - 64px - 80px);
+}
+
+.page-content {
+  flex: 1;
+  padding: 0 24px;
 }
 
 .page-header {

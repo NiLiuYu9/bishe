@@ -113,9 +113,16 @@ const handleLogout = async () => {
   height: 100vh;
 }
 
+.el-container {
+  height: 100%;
+}
+
 .sidebar {
   background: #1E3A8A;
   transition: width 0.3s;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
 }
 
 .logo {
@@ -126,6 +133,7 @@ const handleLogout = async () => {
   gap: 8px;
   color: #fff;
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  flex-shrink: 0;
 }
 
 .logo-text {
@@ -136,6 +144,8 @@ const handleLogout = async () => {
 .sidebar-menu {
   background: transparent;
   border-right: none;
+  flex: 1;
+  overflow-y: auto;
 }
 
 .sidebar-menu:not(.el-menu--collapse) {

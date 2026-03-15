@@ -310,7 +310,7 @@ const updateMyInvokeChart = () => {
     },
     yAxis: { type: 'value' },
     series
-  })
+  }, { notMerge: true })
 }
 
 const updateMyApiInvokeChart = () => {
@@ -348,16 +348,16 @@ const updateMyApiInvokeChart = () => {
     },
     yAxis: { type: 'value' },
     series
-  })
+  }, { notMerge: true })
 }
 
 watch(selectedIndicators, () => {
-  if (activeTab.value === 'my-invoke' && myInvokeChart) {
+  if (activeTab.value === 'my-invoke') {
     updateMyInvokeChart()
-  } else if (activeTab.value === 'my-api-invoke' && myApiInvokeChart) {
+  } else if (activeTab.value === 'my-api-invoke') {
     updateMyApiInvokeChart()
   }
-})
+}, { deep: true })
 
 const handleResize = () => {
   myInvokeChart?.resize()

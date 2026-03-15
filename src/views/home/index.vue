@@ -22,56 +22,77 @@
       </div>
     </section>
     
-    <section class="categories-section">
-      <h2 class="section-title">API分类</h2>
-      <div class="categories-grid">
-        <div
-          v-for="category in categories"
-          :key="category.id"
-          class="category-card"
-          @click="goToCategory(category.id)"
-        >
-          <div class="category-icon">
-            <el-icon :size="32"><DataLine /></el-icon>
-          </div>
-          <h3>{{ category.name }}</h3>
-          <p>{{ category.description }}</p>
-          <span class="api-count">{{ category.apiCount || 0 }} 个API</span>
+    <main class="main-content">
+      <section class="requirements-section">
+        <div class="section-header">
+          <h2 class="section-title">需求广场</h2>
+          <el-button text type="primary" @click="router.push('/requirement')">
+            查看全部 <el-icon><ArrowRight /></el-icon>
+          </el-button>
         </div>
-      </div>
-    </section>
-    
-    <section class="featured-section">
-      <div class="section-header">
-        <h2 class="section-title">热门API</h2>
-        <el-button text type="primary" @click="router.push('/api')">
-          查看全部 <el-icon><ArrowRight /></el-icon>
-        </el-button>
-      </div>
-      <div class="api-grid">
-        <div
-          v-for="api in featuredApis"
-          :key="api.id"
-          class="api-card"
-          @click="goToApiDetail(api.id)"
-        >
-          <div class="api-header">
-            <el-tag type="primary">{{ api.typeName }}</el-tag>
-            <span class="api-method">{{ api.method }}</span>
+        <div class="requirement-cards">
+          <div v-if="requirements.length === 0" class="empty-state">
+            <el-empty description="暂无需求" />
           </div>
-          <h3 class="api-name">{{ api.name }}</h3>
-          <p class="api-desc">{{ api.description }}</p>
-          <div class="api-stats">
-            <span><el-icon><View /></el-icon> {{ api.invokeCount }} 次调用</span>
-            <span><el-icon><Star /></el-icon> {{ api.rating }}</span>
-          </div>
-          <div class="api-footer">
-            <span class="price">¥{{ api.price }}/{{ getPriceUnit(api.priceUnit) }}</span>
-            <el-button type="primary" size="small">查看详情</el-button>
+          <div
+            v-else
+            v-for="req in requirements"
+            :key="req.id"
+            class="requirement-card"
+            @click="goToRequirementDetail(req.id)"
+          >
+            <div class="req-header">
+              <h3>{{ req.title }}</h3>
+              <el-tag :type="getStatusType(req.status)" size="small">{{ getStatusText(req.status) }}</el-tag>
+            </div>
+            <p class="req-desc">{{ req.description }}</p>
+            <div class="req-meta">
+              <span><el-icon><User /></el-icon> {{ req.username }}</span>
+              <span><el-icon><Money /></el-icon> ¥{{ req.budget }}</span>
+              <span><el-icon><Calendar /></el-icon> {{ req.deadline }}</span>
+            </div>
           </div>
         </div>
-      </div>
-    </section>
+      </section>
+      
+      <section class="featured-section">
+        <div class="section-header">
+          <h2 class="section-title">热门API</h2>
+          <el-button text type="primary" @click="router.push('/api')">
+            查看全部 <el-icon><ArrowRight /></el-icon>
+          </el-button>
+        </div>
+        <div class="api-grid">
+          <div
+            v-for="api in featuredApis"
+            :key="api.id"
+            class="api-card"
+            @click="goToApiDetail(api.id)"
+          >
+            <div class="favorite-btn" @click.stop="toggleFavorite(api)" v-if="userStore.isLoggedIn">
+              <el-icon :size="20" :color="api.isFavorited ? '#f56c6c' : '#909399'">
+                <StarFilled v-if="api.isFavorited" />
+                <Star v-else />
+              </el-icon>
+            </div>
+            <div class="api-header">
+              <el-tag type="primary">{{ api.typeName }}</el-tag>
+              <span class="api-method">{{ api.method }}</span>
+            </div>
+            <h3 class="api-name">{{ api.name }}</h3>
+            <p class="api-desc">{{ api.description }}</p>
+            <div class="api-stats">
+              <span><el-icon><View /></el-icon> {{ api.invokeCount }} 次调用</span>
+              <span><el-icon><Star /></el-icon> {{ api.rating }}</span>
+            </div>
+            <div class="api-footer">
+              <span class="price">¥{{ api.price }}/{{ getPriceUnit(api.priceUnit) }}</span>
+              <el-button type="primary" size="small">查看详情</el-button>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
     
     <section class="features-section">
       <h2 class="section-title">为什么选择我们</h2>
@@ -126,20 +147,23 @@
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { 
-  Search, ArrowRight, View, Star, Lock, 
+  Search, ArrowRight, View, Star, StarFilled, Lock, 
   TrendCharts, Monitor, ChatDotRound,
-  DataLine, Document, Picture, Location, Money, More
+  User, Money, Calendar
 } from '@element-plus/icons-vue'
-import { apiManagement } from '@/api/api'
-import type { ApiType, ApiItem } from '@/types/api'
+import { ElMessage } from 'element-plus'
+import { apiManagement, apiFavorite } from '@/api/api'
+import { requirementApi } from '@/api/requirement'
+import { useUserStore } from '@/stores/user'
+import type { ApiItem } from '@/types/api'
+import type { Requirement } from '@/types/requirement'
 
 const router = useRouter()
+const userStore = useUserStore()
 
 const searchKeyword = ref('')
-
-const categories = ref<ApiType[]>([])
-
 const featuredApis = ref<ApiItem[]>([])
+const requirements = ref<Requirement[]>([])
 
 const loadFeaturedApis = async () => {
   try {
@@ -155,18 +179,21 @@ const loadFeaturedApis = async () => {
   }
 }
 
-const loadCategories = async () => {
+const loadRequirements = async () => {
   try {
-    const res = await apiManagement.getApiTypes({ pageNum: 1, pageSize: 100 })
-    categories.value = res.data.list
+    const res = await requirementApi.getList({
+      pageNum: 1,
+      pageSize: 4
+    })
+    requirements.value = res.data.list
   } catch (error) {
-    console.error('加载分类失败', error)
+    console.error('加载需求失败', error)
   }
 }
 
 onMounted(() => {
-  loadCategories()
   loadFeaturedApis()
+  loadRequirements()
 })
 
 const handleSearch = () => {
@@ -175,22 +202,28 @@ const handleSearch = () => {
   }
 }
 
-const goToCategory = (id: number) => {
-  router.push({ path: '/api', query: { typeId: id.toString() } })
-}
-
 const goToApiDetail = (id: number) => {
   router.push(`/api/${id}`)
 }
 
-const getMethodType = (method: string) => {
-  const types: Record<string, string> = {
-    GET: 'success',
-    POST: 'primary',
-    PUT: 'warning',
-    DELETE: 'danger'
+const goToRequirementDetail = (id: number) => {
+  router.push(`/requirement/${id}`)
+}
+
+const toggleFavorite = async (api: ApiItem) => {
+  try {
+    if (api.isFavorited) {
+      await apiFavorite.remove(api.id)
+      api.isFavorited = false
+      ElMessage.success('已取消收藏')
+    } else {
+      await apiFavorite.add(api.id)
+      api.isFavorited = true
+      ElMessage.success('收藏成功')
+    }
+  } catch (error) {
+    console.error('收藏操作失败:', error)
   }
-  return types[method] || 'info'
 }
 
 const getPriceUnit = (unit: string) => {
@@ -201,10 +234,32 @@ const getPriceUnit = (unit: string) => {
   }
   return units[unit] || unit
 }
+
+const getStatusType = (status: string) => {
+  const types: Record<string, string> = {
+    open: 'success',
+    in_progress: 'warning',
+    completed: 'info',
+    cancelled: 'danger'
+  }
+  return types[status] || 'info'
+}
+
+const getStatusText = (status: string) => {
+  const texts: Record<string, string> = {
+    open: '开放中',
+    in_progress: '进行中',
+    completed: '已完成',
+    cancelled: '已取消'
+  }
+  return texts[status] || status
+}
 </script>
 
 <style scoped>
 .home-page {
+  width: 100%;
+  padding: 0 24px;
   max-width: 1400px;
   margin: 0 auto;
 }
@@ -240,6 +295,12 @@ const getPriceUnit = (unit: string) => {
   border-radius: 8px;
 }
 
+.main-content {
+  flex: 1;
+  min-width: 0;
+  margin-bottom: 48px;
+}
+
 .section-title {
   font-size: 28px;
   font-weight: 600;
@@ -247,69 +308,75 @@ const getPriceUnit = (unit: string) => {
   margin-bottom: 24px;
 }
 
-.categories-section {
-  margin-bottom: 48px;
-}
-
-.categories-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-  gap: 24px;
-}
-
-.category-card {
-  background: #fff;
-  border-radius: 12px;
-  padding: 24px;
-  text-align: center;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.category-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
-}
-
-.category-icon {
-  width: 64px;
-  height: 64px;
-  background: #EFF6FF;
-  border-radius: 16px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin: 0 auto 16px;
-  color: #1E40AF;
-}
-
-.category-card h3 {
-  font-size: 16px;
-  font-weight: 600;
-  color: #1E3A8A;
-  margin-bottom: 8px;
-}
-
-.category-card p {
-  font-size: 14px;
-  color: #475569;
-  margin-bottom: 12px;
-}
-
-.api-count {
-  font-size: 12px;
-  color: #3B82F6;
-}
-
-.featured-section {
-  margin-bottom: 48px;
-}
-
 .section-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
   margin-bottom: 24px;
+}
+
+.requirements-section {
+  margin-bottom: 48px;
+}
+
+.requirement-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.requirement-card {
+  background: #fff;
+  border-radius: 12px;
+  border: 1px solid #E2E8F0;
+  padding: 24px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.requirement-card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.req-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.req-header h3 {
+  font-size: 18px;
+  font-weight: 600;
+  color: #1E3A8A;
+  margin: 0;
+}
+
+.req-desc {
+  color: #475569;
+  margin-bottom: 16px;
+  line-height: 1.6;
+}
+
+.req-meta {
+  display: flex;
+  gap: 24px;
+  color: #64748B;
+  font-size: 14px;
+}
+
+.req-meta span {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.empty-state {
+  padding: 48px 0;
+}
+
+.featured-section {
+  margin-bottom: 48px;
 }
 
 .api-grid {
@@ -324,11 +391,33 @@ const getPriceUnit = (unit: string) => {
   padding: 24px;
   cursor: pointer;
   transition: all 0.2s;
+  position: relative;
 }
 
 .api-card:hover {
   transform: translateY(-4px);
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+}
+
+.favorite-btn {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.9);
+  cursor: pointer;
+  transition: all 0.2s;
+  z-index: 1;
+}
+
+.favorite-btn:hover {
+  background: #fff;
+  transform: scale(1.1);
 }
 
 .api-header {
@@ -404,7 +493,7 @@ const getPriceUnit = (unit: string) => {
 }
 
 .feature-icon {
-  color: #1E40AF;
+  color: #1E3A8A;
   margin-bottom: 16px;
 }
 
@@ -453,10 +542,6 @@ const getPriceUnit = (unit: string) => {
   
   .hero-content h1 {
     font-size: 28px;
-  }
-  
-  .categories-grid {
-    grid-template-columns: repeat(2, 1fr);
   }
 }
 </style>
