@@ -22,16 +22,8 @@ export const apiManagement = {
     return request.put(`${apiEndpoints.api.updateStatus}/${id}`, data)
   },
 
-  delete(id: string | number) {
-    return request.delete(`${apiEndpoints.api.delete}/${id}`)
-  },
-
   getMyApis(params: ApiListParams) {
     return request.get<{ list: ApiItem[]; total: number }>(apiEndpoints.api.myApis, params)
-  },
-
-  submitAudit(id: string | number) {
-    return request.post(`${apiEndpoints.api.audit}/${id}`)
   },
 
   getStatistics(id: string | number, params: { startDate?: string; endDate?: string }) {

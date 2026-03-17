@@ -7,6 +7,8 @@ export interface TestRecord {
   result: any
   success: boolean
   errorMsg?: string
+  responseTime?: number
+  statusCode?: number
   createTime: string
 }
 

@@ -37,7 +37,7 @@
             <el-tag :type="getStatusType(row.status)">{{ getStatusText(row.status) }}</el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="createTime" label="创建时间" width="180" />
+        <el-table-column prop="createTime" label="创建时间" width="180" :cell-style="{ whiteSpace: 'nowrap' }" />
         <el-table-column label="操作" width="150">
           <template #default="{ row }">
             <el-button text type="primary" @click="viewOrder(row)">详情</el-button>
@@ -74,7 +74,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, onMounted, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { adminApi } from '@/api/admin'
 import type { Order } from '@/types/trade'
@@ -157,6 +157,15 @@ const resetFilters = () => {
   pagination.page = 1
   fetchOrders()
 }
+
+watch(() => pagination.page, () => {
+  fetchOrders()
+})
+
+watch(() => pagination.pageSize, () => {
+  pagination.page = 1
+  fetchOrders()
+})
 
 const viewOrder = (order: Order) => {
   currentOrder.value = order

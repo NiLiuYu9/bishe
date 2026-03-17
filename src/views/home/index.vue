@@ -1,6 +1,9 @@
 <template>
   <div class="home-page">
     <section class="hero-section">
+      <div class="hero-bg-animation">
+        <div class="particle" v-for="i in 20" :key="i" :style="getParticleStyle(i)"></div>
+      </div>
       <div class="hero-content">
         <h1>发现、购买、上架API</h1>
         <p class="hero-subtitle">一站式API交易平台，连接开发者与创新应用</p>
@@ -10,6 +13,7 @@
             placeholder="搜索API名称、功能描述、作者名..."
             size="large"
             @keyup.enter="handleSearch"
+            class="search-input"
           >
             <template #prefix>
               <el-icon><Search /></el-icon>
@@ -23,38 +27,6 @@
     </section>
     
     <main class="main-content">
-      <section class="requirements-section">
-        <div class="section-header">
-          <h2 class="section-title">需求广场</h2>
-          <el-button text type="primary" @click="router.push('/requirement')">
-            查看全部 <el-icon><ArrowRight /></el-icon>
-          </el-button>
-        </div>
-        <div class="requirement-cards">
-          <div v-if="requirements.length === 0" class="empty-state">
-            <el-empty description="暂无需求" />
-          </div>
-          <div
-            v-else
-            v-for="req in requirements"
-            :key="req.id"
-            class="requirement-card"
-            @click="goToRequirementDetail(req.id)"
-          >
-            <div class="req-header">
-              <h3>{{ req.title }}</h3>
-              <el-tag :type="getStatusType(req.status)" size="small">{{ getStatusText(req.status) }}</el-tag>
-            </div>
-            <p class="req-desc">{{ req.description }}</p>
-            <div class="req-meta">
-              <span><el-icon><User /></el-icon> {{ req.username }}</span>
-              <span><el-icon><Money /></el-icon> ¥{{ req.budget }}</span>
-              <span><el-icon><Calendar /></el-icon> {{ req.deadline }}</span>
-            </div>
-          </div>
-        </div>
-      </section>
-      
       <section class="featured-section">
         <div class="section-header">
           <h2 class="section-title">热门API</h2>
@@ -88,6 +60,38 @@
             <div class="api-footer">
               <span class="price">¥{{ api.price }}/{{ getPriceUnit(api.priceUnit) }}</span>
               <el-button type="primary" size="small">查看详情</el-button>
+            </div>
+          </div>
+        </div>
+      </section>
+      
+      <section class="requirements-section">
+        <div class="section-header">
+          <h2 class="section-title">需求广场</h2>
+          <el-button text type="primary" @click="router.push('/requirement')">
+            查看全部 <el-icon><ArrowRight /></el-icon>
+          </el-button>
+        </div>
+        <div class="requirement-cards">
+          <div v-if="requirements.length === 0" class="empty-state">
+            <el-empty description="暂无需求" />
+          </div>
+          <div
+            v-else
+            v-for="req in requirements"
+            :key="req.id"
+            class="requirement-card"
+            @click="goToRequirementDetail(req.id)"
+          >
+            <div class="req-header">
+              <h3>{{ req.title }}</h3>
+              <el-tag :type="getStatusType(req.status)" size="small">{{ getStatusText(req.status) }}</el-tag>
+            </div>
+            <p class="req-desc">{{ req.description }}</p>
+            <div class="req-meta">
+              <span><el-icon><User /></el-icon> {{ req.username }}</span>
+              <span><el-icon><Money /></el-icon> ¥{{ req.budget }}</span>
+              <span><el-icon><Calendar /></el-icon> {{ req.deadline }}</span>
             </div>
           </div>
         </div>
@@ -254,6 +258,22 @@ const getStatusText = (status: string) => {
   }
   return texts[status] || status
 }
+
+const getParticleStyle = (index: number) => {
+  const size = Math.random() * 4 + 2
+  const x = Math.random() * 100
+  const y = Math.random() * 100
+  const duration = Math.random() * 20 + 10
+  const delay = Math.random() * 10
+  return {
+    width: `${size}px`,
+    height: `${size}px`,
+    left: `${x}%`,
+    top: `${y}%`,
+    animationDuration: `${duration}s`,
+    animationDelay: `${delay}s`
+  }
+}
 </script>
 
 <style scoped>
@@ -265,12 +285,67 @@ const getStatusText = (status: string) => {
 }
 
 .hero-section {
-  background: linear-gradient(135deg, #1E3A8A 0%, #3B82F6 100%);
+  position: relative;
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.85) 0%, rgba(139, 92, 246, 0.85) 50%, rgba(168, 85, 247, 0.85) 100%);
   border-radius: 16px;
   padding: 80px 48px;
   text-align: center;
   color: #fff;
   margin-bottom: 48px;
+  overflow: hidden;
+}
+
+.hero-section::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: 
+    radial-gradient(ellipse at 20% 50%, rgba(120, 119, 198, 0.3) 0%, transparent 50%),
+    radial-gradient(ellipse at 80% 50%, rgba(255, 119, 198, 0.15) 0%, transparent 50%),
+    radial-gradient(ellipse at 50% 100%, rgba(99, 102, 241, 0.2) 0%, transparent 50%);
+  pointer-events: none;
+}
+
+.hero-bg-animation {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.particle {
+  position: absolute;
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 50%;
+  animation: float linear infinite;
+}
+
+@keyframes float {
+  0% {
+    transform: translateY(0) translateX(0);
+    opacity: 0;
+  }
+  10% {
+    opacity: 1;
+  }
+  90% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(-100vh) translateX(50px);
+    opacity: 0;
+  }
+}
+
+.hero-content {
+  position: relative;
+  z-index: 1;
 }
 
 .hero-content h1 {
@@ -291,8 +366,44 @@ const getStatusText = (status: string) => {
 }
 
 .search-box :deep(.el-input__wrapper) {
-  background: #fff;
-  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  box-shadow: none;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(12px);
+  transition: all 0.3s ease;
+}
+
+.search-box :deep(.el-input__wrapper):hover,
+.search-box :deep(.el-input__wrapper):focus-within {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.25);
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.05);
+}
+
+.search-box :deep(.el-input__inner) {
+  color: #fff;
+  font-weight: 400;
+}
+
+.search-box :deep(.el-input__inner::placeholder) {
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.search-box :deep(.el-input-group__append) {
+  background: rgba(255, 255, 255, 0.15);
+  border: none;
+  box-shadow: none;
+}
+
+.search-box :deep(.el-input-group__append .el-button) {
+  background: transparent;
+  border: none;
+  color: #fff;
+}
+
+.search-box :deep(.el-input-group__append .el-button:hover) {
+  background: rgba(255, 255, 255, 0.1);
 }
 
 .main-content {
@@ -304,7 +415,7 @@ const getStatusText = (status: string) => {
 .section-title {
   font-size: 28px;
   font-weight: 600;
-  color: #1E3A8A;
+  color: #1a1a2e;
   margin-bottom: 24px;
 }
 
@@ -315,83 +426,25 @@ const getStatusText = (status: string) => {
   margin-bottom: 24px;
 }
 
-.requirements-section {
-  margin-bottom: 48px;
-}
-
-.requirement-cards {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-.requirement-card {
-  background: #fff;
-  border-radius: 12px;
-  border: 1px solid #E2E8F0;
-  padding: 24px;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.requirement-card:hover {
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-}
-
-.req-header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  margin-bottom: 12px;
-}
-
-.req-header h3 {
-  font-size: 18px;
-  font-weight: 600;
-  color: #1E3A8A;
-  margin: 0;
-}
-
-.req-desc {
-  color: #475569;
-  margin-bottom: 16px;
-  line-height: 1.6;
-}
-
-.req-meta {
-  display: flex;
-  gap: 24px;
-  color: #64748B;
-  font-size: 14px;
-}
-
-.req-meta span {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-
-.empty-state {
-  padding: 48px 0;
-}
-
 .featured-section {
   margin-bottom: 48px;
 }
 
 .api-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
   gap: 24px;
 }
 
 .api-card {
   background: #fff;
-  border-radius: 12px;
+  border-radius: 16px;
   padding: 24px;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
 }
 
 .api-card:hover {
@@ -401,57 +454,71 @@ const getStatusText = (status: string) => {
 
 .favorite-btn {
   position: absolute;
-  top: 12px;
-  right: 12px;
-  width: 32px;
-  height: 32px;
+  top: 16px;
+  right: 16px;
+  width: 36px;
+  height: 36px;
   display: flex;
   align-items: center;
   justify-content: center;
   border-radius: 50%;
   background: rgba(255, 255, 255, 0.9);
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.3s;
   z-index: 1;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 .favorite-btn:hover {
   background: #fff;
   transform: scale(1.1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
 .api-header {
   display: flex;
   align-items: center;
   gap: 8px;
-  margin-bottom: 12px;
+  margin-bottom: 16px;
+}
+
+.api-header :deep(.el-tag) {
+  transition: all 0.3s;
 }
 
 .api-method {
   font-size: 12px;
-  color: #475569;
+  color: #64748B;
   font-weight: 500;
+  background: #f1f5f9;
+  padding: 2px 8px;
+  border-radius: 4px;
 }
 
 .api-name {
   font-size: 18px;
   font-weight: 600;
-  color: #1E3A8A;
+  color: #1a1a2e;
   margin-bottom: 8px;
+  transition: color 0.3s;
 }
 
 .api-desc {
   font-size: 14px;
-  color: #475569;
+  color: #64748B;
   margin-bottom: 16px;
-  line-height: 1.5;
+  line-height: 1.6;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 .api-stats {
   display: flex;
   gap: 16px;
   font-size: 13px;
-  color: #64748B;
+  color: #94a3b8;
   margin-bottom: 16px;
 }
 
@@ -466,13 +533,86 @@ const getStatusText = (status: string) => {
   align-items: center;
   justify-content: space-between;
   padding-top: 16px;
-  border-top: 1px solid #E2E8F0;
+  border-top: 1px solid #f1f5f9;
 }
 
 .price {
   font-size: 18px;
   font-weight: 600;
   color: #22C55E;
+}
+
+.requirements-section {
+  margin-bottom: 48px;
+}
+
+.requirement-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 20px;
+}
+
+.requirement-card {
+  background: #fff;
+  border-radius: 16px;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  padding: 24px;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.requirement-card:hover {
+  box-shadow: 0 12px 24px rgba(102, 126, 234, 0.1);
+  border-color: rgba(102, 126, 234, 0.2);
+  transform: translateY(-4px);
+}
+
+.req-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.req-header h3 {
+  font-size: 16px;
+  font-weight: 600;
+  color: #1a1a2e;
+  margin: 0;
+  transition: color 0.3s;
+}
+
+.requirement-card:hover .req-header h3 {
+  color: #667eea;
+}
+
+.req-desc {
+  color: #64748B;
+  margin-bottom: 16px;
+  line-height: 1.6;
+  font-size: 14px;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.req-meta {
+  display: flex;
+  gap: 16px;
+  color: #94a3b8;
+  font-size: 13px;
+}
+
+.req-meta span {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.empty-state {
+  padding: 48px 0;
 }
 
 .features-section {
@@ -487,30 +627,38 @@ const getStatusText = (status: string) => {
 
 .feature-card {
   background: #fff;
-  border-radius: 12px;
+  border-radius: 16px;
   padding: 32px;
   text-align: center;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  transition: all 0.3s;
+}
+
+.feature-card:hover {
+  box-shadow: 0 12px 24px rgba(102, 126, 234, 0.1);
+  transform: translateY(-4px);
 }
 
 .feature-icon {
-  color: #1E3A8A;
+  color: #667eea;
   margin-bottom: 16px;
 }
 
 .feature-card h3 {
   font-size: 18px;
   font-weight: 600;
-  color: #1E3A8A;
+  color: #1a1a2e;
   margin-bottom: 8px;
 }
 
 .feature-card p {
   font-size: 14px;
-  color: #475569;
+  color: #64748B;
+  line-height: 1.6;
 }
 
 .cta-section {
-  background: linear-gradient(135deg, #1E3A8A 0%, #3B82F6 100%);
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   border-radius: 16px;
   padding: 64px 48px;
   text-align: center;
@@ -535,6 +683,28 @@ const getStatusText = (status: string) => {
   justify-content: center;
 }
 
+.cta-buttons :deep(.el-button--primary) {
+  background: #fff;
+  color: #667eea;
+  border-color: #fff;
+}
+
+.cta-buttons :deep(.el-button--primary:hover) {
+  background: rgba(255, 255, 255, 0.9);
+  border-color: #fff;
+}
+
+.cta-buttons :deep(.el-button:not(.el-button--primary)) {
+  background: transparent;
+  color: #fff;
+  border-color: rgba(255, 255, 255, 0.5);
+}
+
+.cta-buttons :deep(.el-button:not(.el-button--primary):hover) {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: #fff;
+}
+
 @media (max-width: 768px) {
   .hero-section {
     padding: 48px 24px;
@@ -542,6 +712,14 @@ const getStatusText = (status: string) => {
   
   .hero-content h1 {
     font-size: 28px;
+  }
+  
+  .api-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .requirement-cards {
+    grid-template-columns: 1fr;
   }
 }
 </style>

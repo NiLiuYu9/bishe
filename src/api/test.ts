@@ -6,11 +6,19 @@ export const testApi = {
     return request.post<{ result: any; success: boolean }>(apiEndpoints.test.testCall, data)
   },
 
-  saveRecord(data: TestRecord) {
-    return request.post(apiEndpoints.test.saveRecord, data)
+  getRecordCount(apiId: string | number) {
+    return request.get<number>(apiEndpoints.test.recordCount, { apiId })
   },
 
-  getRecords(params: { apiId: string | number; page: number; pageSize: number }) {
-    return request.get<{ list: TestRecord[]; total: number }>(apiEndpoints.test.records, params)
+  saveRecord(data: TestRecord) {
+    return request.post<TestRecord>(apiEndpoints.test.saveRecord, data)
+  },
+
+  getRecords(apiId: string | number) {
+    return request.get<TestRecord[]>(apiEndpoints.test.records, { apiId })
+  },
+
+  deleteRecord(id: number) {
+    return request.delete<void>(`${apiEndpoints.test.deleteRecord}/${id}`)
   }
 }

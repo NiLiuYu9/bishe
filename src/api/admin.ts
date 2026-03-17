@@ -6,10 +6,6 @@ export const adminApi = {
     return request.get<{ list: User[]; total: number }>(apiEndpoints.admin.users, params)
   },
 
-  getUserDetail(id: string | number) {
-    return request.get<User>(`${apiEndpoints.admin.userDetail}/${id}`)
-  },
-
   freezeUser(id: string | number, data: { reason: string }) {
     return request.put(`${apiEndpoints.admin.freezeUser}/${id}/freeze`, data)
   },

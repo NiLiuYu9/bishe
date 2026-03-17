@@ -28,9 +28,7 @@ export const apiEndpoints = {
     create: '/api/create',
     update: '/api/update',
     updateStatus: '/api/updateStatus',
-    delete: '/api/delete',
     myApis: '/api/getApis',
-    audit: '/api/audit',
     statistics: '/api/statistics',
     myInvokeStatistics: '/api/statistics/my-invoke',
     myApiInvokeStatistics: '/api/statistics/my-api-invoke',
@@ -52,8 +50,10 @@ export const apiEndpoints = {
   },
   test: {
     testCall: '/test/call',
+    recordCount: '/test/records/count',
     saveRecord: '/test/save-record',
-    records: '/test/records'
+    records: '/test/records',
+    deleteRecord: '/test/records'
   },
   requirement: {
     list: '/requirement/list',
@@ -70,7 +70,6 @@ export const apiEndpoints = {
   },
   admin: {
     users: '/admin/users',
-    userDetail: '/admin/user-detail',
     freezeUser: '/admin/users',
     unfreezeUser: '/admin/users',
     apis: '/admin/apis',

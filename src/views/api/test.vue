@@ -78,7 +78,7 @@
     </div>
     
     <div class="test-records card" v-if="records.length > 0">
-      <h3 class="section-title">测试记录</h3>
+      <h3 class="section-title">测试记录 ({{ records.length }}/5)</h3>
       <el-table :data="records" border>
         <el-table-column prop="createTime" label="时间" width="180" />
         <el-table-column prop="params" label="参数">
@@ -93,25 +93,48 @@
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="120">
+        <el-table-column label="操作" width="150">
           <template #default="{ row }">
             <el-button text type="primary" @click="loadRecord(row)">加载</el-button>
+            <el-button text type="danger" @click="handleDeleteRecord(row)">删除</el-button>
           </template>
         </el-table-column>
       </el-table>
     </div>
+
+    <el-dialog v-model="selectRecordDialogVisible" title="测试记录已满" width="500px">
+      <p>您已保存5条测试记录，请选择一条记录删除后再保存新记录。</p>
+      <el-table :data="records" border max-height="300">
+        <el-table-column prop="createTime" label="时间" width="160" />
+        <el-table-column prop="params" label="参数">
+          <template #default="{ row }">
+            <code>{{ JSON.stringify(row.params) }}</code>
+          </template>
+        </el-table-column>
+        <el-table-column label="操作" width="80">
+          <template #default="{ row }">
+            <el-button text type="danger" @click="deleteAndSave(row)">删除</el-button>
+          </template>
+        </el-table-column>
+      </el-table>
+      <template #footer>
+        <el-button @click="selectRecordDialogVisible = false">取消</el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, reactive, computed, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import { ElMessage } from 'element-plus'
+import { ElMessage, ElMessageBox } from 'element-plus'
 import { ArrowLeft, VideoPlay, Document } from '@element-plus/icons-vue'
 import { testApi } from '@/api/test'
 import { apiManagement } from '@/api/api'
 import type { ApiItem } from '@/types/api'
 import type { TestRecord } from '@/types/test'
+
+const MAX_RECORDS = 5
 
 const router = useRouter()
 const route = useRoute()
@@ -119,6 +142,7 @@ const route = useRoute()
 const testing = ref(false)
 const testResult = ref<any>(null)
 const records = ref<TestRecord[]>([])
+const selectRecordDialogVisible = ref(false)
 
 const api = ref<ApiItem>({
   id: 0,
@@ -154,6 +178,7 @@ const fetchApiDetail = async () => {
   try {
     const res = await apiManagement.getDetail(id)
     api.value = res.data
+    fetchRecords()
   } catch (error) {
     console.error('获取API详情失败:', error)
     api.value = {
@@ -196,28 +221,19 @@ const handleTest = async () => {
     testResult.value = {
       success: res.data.success,
       data: res.data.result,
-      responseTime: 120,
-      statusCode: 200
+      responseTime: res.data.responseTime,
+      statusCode: res.data.statusCode
     }
     ElMessage.success('测试成功')
   } catch (error) {
     console.error('测试失败:', error)
     testResult.value = {
-      success: true,
-      data: {
-        code: 200,
-        message: 'success',
-        data: {
-          city: testForm.params.city || '北京',
-          temperature: '25°C',
-          weather: '晴',
-          humidity: '45%',
-          wind: '东南风3级'
-        }
-      },
-      responseTime: 120,
-      statusCode: 200
+      success: false,
+      data: null,
+      responseTime: 0,
+      statusCode: 500
     }
+    ElMessage.error('测试失败')
   } finally {
     testing.value = false
   }
@@ -227,31 +243,68 @@ const saveTestRecord = async () => {
   if (!testResult.value) return
   
   try {
+    const countRes = await testApi.getRecordCount(api.value.id)
+    const count = countRes.data
+    
+    if (count >= MAX_RECORDS) {
+      selectRecordDialogVisible.value = true
+      return
+    }
+    
+    await doSaveRecord()
+  } catch (error) {
+    console.error('检查记录数量失败:', error)
+    ElMessage.error('保存失败')
+  }
+}
+
+const doSaveRecord = async () => {
+  try {
     await testApi.saveRecord({
-      id: Date.now(),
+      id: 0,
       apiId: api.value.id,
       apiName: api.value.name,
       userId: 0,
       params: testForm.params,
       result: testResult.value.data,
       success: testResult.value.success,
+      responseTime: testResult.value.responseTime,
+      statusCode: testResult.value.statusCode,
       createTime: new Date().toISOString()
     })
     ElMessage.success('保存成功')
     fetchRecords()
   } catch (error) {
     console.error('保存失败:', error)
-    records.value.unshift({
-      id: Date.now(),
-      apiId: api.value.id,
-      apiName: api.value.name,
-      userId: 0,
-      params: { ...testForm.params },
-      result: testResult.value.data,
-      success: testResult.value.success,
-      createTime: new Date().toLocaleString()
+    ElMessage.error('保存失败')
+  }
+}
+
+const deleteAndSave = async (record: TestRecord) => {
+  try {
+    await testApi.deleteRecord(record.id)
+    ElMessage.success('删除成功')
+    selectRecordDialogVisible.value = false
+    await doSaveRecord()
+  } catch (error) {
+    console.error('删除失败:', error)
+    ElMessage.error('删除失败')
+  }
+}
+
+const handleDeleteRecord = async (record: TestRecord) => {
+  try {
+    await ElMessageBox.confirm('确定要删除该测试记录吗？', '提示', {
+      type: 'warning'
     })
-    ElMessage.success('保存成功')
+    await testApi.deleteRecord(record.id)
+    ElMessage.success('删除成功')
+    fetchRecords()
+  } catch (error) {
+    if (error !== 'cancel') {
+      console.error('删除失败:', error)
+      ElMessage.error('删除失败')
+    }
   }
 }
 
@@ -260,21 +313,18 @@ const loadRecord = (record: TestRecord) => {
   testResult.value = {
     success: record.success,
     data: record.result,
-    responseTime: 100,
-    statusCode: 200
+    responseTime: record.responseTime || 0,
+    statusCode: record.statusCode || 200
   }
 }
 
 const fetchRecords = async () => {
   try {
-    const res = await testApi.getRecords({
-      apiId: api.value.id,
-      page: 1,
-      pageSize: 10
-    })
-    records.value = res.data.list
+    const res = await testApi.getRecords(api.value.id)
+    records.value = res.data || []
   } catch (error) {
     console.error('获取记录失败:', error)
+    records.value = []
   }
 }
 
