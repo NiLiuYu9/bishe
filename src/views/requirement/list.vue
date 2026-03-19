@@ -38,7 +38,7 @@
           <div v-for="req in requirements" :key="req.id" class="requirement-card" @click="goToDetail(req.id)">
             <div class="req-header">
               <h3>{{ req.title }}</h3>
-              <el-tag :type="getStatusType(req.status)">{{ getStatusText(req.status) }}</el-tag>
+              <StatusTag :status="req.status" type="requirement" />
             </div>
             
             <p class="req-desc">{{ req.description }}</p>
@@ -96,6 +96,7 @@ import { Plus, User, Money, Calendar } from '@element-plus/icons-vue'
 import { requirementApi } from '@/api/requirement'
 import { apiManagement } from '@/api/api'
 import { useUserStore } from '@/stores/user'
+import StatusTag from '@/components/StatusTag.vue'
 import type { Requirement } from '@/types/requirement'
 import type { ApiType } from '@/types/api'
 
@@ -122,53 +123,7 @@ const pagination = reactive({
   pageSize: 10
 })
 
-const mockRequirements: Requirement[] = [
-  {
-    id: 1,
-    title: '需要一个企业信息查询API',
-    description: '需要根据企业名称或统一社会信用代码查询企业基本信息，包括注册资本、法人代表、经营范围等。要求接口响应速度快，数据准确。',
-    requestParams: [],
-    responseParams: [],
-    budget: 500,
-    deadline: '2024-02-01',
-    userId: 1,
-    username: 'user1',
-    status: 'open',
-    applicants: [],
-    createTime: '2024-01-15',
-    updateTime: '2024-01-15'
-  },
-  {
-    id: 2,
-    title: '图片水印添加API',
-    description: '需要给图片添加文字或图片水印，支持批量处理，支持透明度设置和位置调整。',
-    requestParams: [],
-    responseParams: [],
-    budget: 300,
-    deadline: '2024-01-30',
-    userId: 2,
-    username: 'user2',
-    status: 'open',
-    applicants: [],
-    createTime: '2024-01-10',
-    updateTime: '2024-01-10'
-  },
-  {
-    id: 3,
-    title: '短信验证码API',
-    description: '需要短信验证码发送接口，支持三大运营商，到达率99%以上。',
-    requestParams: [],
-    responseParams: [],
-    budget: 800,
-    deadline: '2024-02-15',
-    userId: 3,
-    username: 'user3',
-    status: 'in_progress',
-    applicants: [],
-    createTime: '2024-01-08',
-    updateTime: '2024-01-12'
-  }
-]
+
 
 const fetchTypes = async () => {
   try {
@@ -191,8 +146,8 @@ const fetchRequirements = async () => {
     total.value = res.data.total
   } catch (error) {
     console.error('获取需求列表失败', error)
-    requirements.value = mockRequirements
-    total.value = mockRequirements.length
+    requirements.value = []
+    total.value = 0
   } finally {
     loading.value = false
   }
@@ -232,26 +187,6 @@ const submitApply = async () => {
     console.error('申请失败:', error)
     ElMessage.error('申请失败')
   }
-}
-
-const getStatusType = (status: string) => {
-  const types: Record<string, string> = {
-    open: 'success',
-    in_progress: 'warning',
-    completed: 'info',
-    cancelled: 'danger'
-  }
-  return types[status] || 'info'
-}
-
-const getStatusText = (status: string) => {
-  const texts: Record<string, string> = {
-    open: '开放中',
-    in_progress: '进行中',
-    completed: '已完成',
-    cancelled: '已取消'
-  }
-  return texts[status] || status
 }
 
 onMounted(() => {

@@ -10,9 +10,7 @@
       <div class="main-info card">
         <div class="req-header">
           <h1>{{ requirement.title }}</h1>
-          <el-tag :type="getStatusType(requirement.status)" size="large">
-            {{ getStatusText(requirement.status) }}
-          </el-tag>
+          <StatusTag :status="requirement.status" type="requirement" size="large" />
         </div>
         
         <div class="req-meta">
@@ -25,6 +23,16 @@
         <div class="req-desc">
           <h3>需求描述</h3>
           <p>{{ requirement.description }}</p>
+        </div>
+        
+        <div class="delivery-url" v-if="requirement.deliveryUrl && (requirement.status === 'delivered' || requirement.status === 'completed')">
+          <h3>交付网址</h3>
+          <div class="url-container">
+            <el-link :href="requirement.deliveryUrl" target="_blank" type="primary" :underline="false">
+              {{ requirement.deliveryUrl }}
+              <el-icon><Link /></el-icon>
+            </el-link>
+          </div>
         </div>
         
         <div class="req-params">
@@ -122,10 +130,12 @@
 import { ref, reactive, computed, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import { ArrowLeft, User, Money, Calendar, Clock } from '@element-plus/icons-vue'
+import { ArrowLeft, User, Money, Calendar, Clock, Link } from '@element-plus/icons-vue'
 import { requirementApi } from '@/api/requirement'
 import { useUserStore } from '@/stores/user'
 import type { Requirement, Applicant } from '@/types/requirement'
+import { getStatusInfo, REQUIREMENT_STATUS } from '@/utils/status'
+import StatusTag from '@/components/StatusTag.vue'
 
 const router = useRouter()
 const route = useRoute()
@@ -191,26 +201,6 @@ const selectApplicant = async (applicant: Applicant) => {
     console.error('选择开发者失败:', error)
     ElMessage.error('选择开发者失败')
   }
-}
-
-const getStatusType = (status: string) => {
-  const types: Record<string, string> = {
-    open: 'success',
-    in_progress: 'warning',
-    completed: 'info',
-    cancelled: 'danger'
-  }
-  return types[status] || 'info'
-}
-
-const getStatusText = (status: string) => {
-  const texts: Record<string, string> = {
-    open: '开放中',
-    in_progress: '进行中',
-    completed: '已完成',
-    cancelled: '已取消'
-  }
-  return texts[status] || status
 }
 
 const getApplicantStatusType = (status: string) => {
@@ -280,6 +270,33 @@ onMounted(() => {
 .req-desc,
 .req-params {
   margin-bottom: 24px;
+}
+
+.delivery-url {
+  margin-bottom: 24px;
+}
+
+.delivery-url h3 {
+  font-size: 16px;
+  font-weight: 600;
+  color: #1E3A8A;
+  margin-bottom: 12px;
+}
+
+.url-container {
+  padding: 12px;
+  background: #f0f9ff;
+  border: 1px solid #bae6fd;
+  border-radius: 6px;
+}
+
+.url-container .el-link {
+  font-size: 14px;
+  color: #0284c7;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  word-break: break-all;
 }
 
 .req-desc h3,

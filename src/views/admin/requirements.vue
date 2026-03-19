@@ -148,6 +148,7 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import { ArrowDown, CircleCheck, Loading, Select, CircleClose } from '@element-plus/icons-vue'
 import { adminApi } from '@/api/admin'
 import type { Requirement } from '@/types'
+import { getStatusInfo, REQUIREMENT_STATUS } from '@/utils/status'
 
 interface RequirementRow extends Requirement {
   _expanded?: boolean
@@ -183,26 +184,6 @@ const formatDate = (dateStr: string) => {
   })
 }
 
-const getStatusType = (status: string) => {
-  const map: Record<string, string> = {
-    open: 'success',
-    in_progress: 'warning',
-    completed: 'info',
-    cancelled: 'danger'
-  }
-  return map[status] || 'info'
-}
-
-const getStatusText = (status: string) => {
-  const map: Record<string, string> = {
-    open: '开放中',
-    in_progress: '进行中',
-    completed: '已完成',
-    cancelled: '已取消'
-  }
-  return map[status] || status
-}
-
 const getApplicantStatusType = (status: string) => {
   const map: Record<string, string> = {
     pending: 'warning',
@@ -219,6 +200,14 @@ const getApplicantStatusText = (status: string) => {
     rejected: '已拒绝'
   }
   return map[status] || status
+}
+
+const getStatusType = (status: string) => {
+  return getStatusInfo(status, REQUIREMENT_STATUS).type
+}
+
+const getStatusText = (status: string) => {
+  return getStatusInfo(status, REQUIREMENT_STATUS).text
 }
 
 const fetchRequirements = async () => {
@@ -277,7 +266,7 @@ const viewDetail = async (requirement: Requirement) => {
 }
 
 const handleCommand = async (command: string, requirement: Requirement) => {
-  const statusText = getStatusText(command)
+  const statusText = getStatusInfo(command, REQUIREMENT_STATUS).text
   try {
     await ElMessageBox.confirm(
       `确定将需求「${requirement.title}」状态修改为「${statusText}」吗？`,

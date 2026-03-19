@@ -100,6 +100,8 @@ import { useUserStore } from '@/stores/user'
 import { apiManagement, apiFavorite } from '@/api/api'
 import type { ApiItem, ApiType } from '@/types/api'
 import ApiCreateDialog from '@/components/ApiCreateDialog.vue'
+import { getMethodType } from '@/utils/status'
+import { getPriceUnit } from '@/utils/format'
 
 const router = useRouter()
 const route = useRoute()
@@ -213,33 +215,16 @@ const toggleFavorite = async (api: ApiItem) => {
   }
 }
 
-const getMethodType = (method: string) => {
-  const types: Record<string, string> = {
-    GET: 'success',
-    POST: 'primary',
-    PUT: 'warning',
-    DELETE: 'danger'
-  }
-  return types[method] || 'info'
-}
 
-const getPriceUnit = (unit: string) => {
-  const units: Record<string, string> = {
-    per_call: '次',
-    per_month: '月',
-    per_year: '年'
-  }
-  return units[unit] || unit
-}
 
 watch(
-  () => route.query.typeId,
-  (newTypeId) => {
-    if (newTypeId) {
-      filters.typeId = Number(newTypeId)
-    } else {
-      filters.typeId = ''
-    }
+  () => route.query,
+  (newQuery) => {
+    const typeId = newQuery.typeId
+    const keyword = newQuery.keyword as string
+    
+    filters.typeId = typeId ? Number(typeId) : ''
+    filters.keyword = keyword || ''
     pagination.page = 1
     fetchApiList()
   },
@@ -247,11 +232,7 @@ watch(
 )
 
 onMounted(() => {
-  if (route.query.keyword) {
-    filters.keyword = route.query.keyword as string
-  }
   fetchTypes()
-  fetchApiList()
 })
 </script>
 

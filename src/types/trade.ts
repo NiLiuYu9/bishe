@@ -12,6 +12,10 @@ export interface Order {
   payTime: string
   completeTime: string
   rating?: number
+  reviewContent?: string
+  reviewId?: number
+  _reviewInput?: string
+  _editingReview?: boolean
 }
 
 export interface OrderCreateParams {

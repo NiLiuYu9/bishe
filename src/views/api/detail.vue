@@ -49,70 +49,43 @@
         </div>
       </div>
       
-      <div class="info-tabs card">
-        <el-tabs v-model="activeTab">
-          <el-tab-pane label="请求参数" name="request">
-            <el-table :data="api.requestParams" border>
-              <el-table-column prop="name" label="参数名" width="150" />
-              <el-table-column prop="type" label="类型" width="100" />
-              <el-table-column prop="required" label="必填" width="80">
-                <template #default="{ row }">
-                  <el-tag :type="row.required ? 'danger' : 'info'" size="small">
-                    {{ row.required ? '是' : '否' }}
-                  </el-tag>
-                </template>
-              </el-table-column>
-              <el-table-column prop="description" label="说明" />
-              <el-table-column prop="example" label="示例" width="150" />
-            </el-table>
-          </el-tab-pane>
-          
-          <el-tab-pane label="返回参数" name="response">
-            <el-table :data="api.responseParams" border>
-              <el-table-column prop="name" label="字段名" width="150" />
-              <el-table-column prop="type" label="类型" width="100" />
-              <el-table-column prop="description" label="说明" />
-              <el-table-column prop="example" label="示例" width="150" />
-            </el-table>
-          </el-tab-pane>
-          
-          <el-tab-pane label="价格说明" name="price">
-            <div class="price-info-card">
-              <div class="price-header">
-                <span class="label">单价</span>
-                <span class="unit-price">¥{{ api.price }} / 次</span>
-              </div>
-              <div class="price-desc">
-                <p>按调用次数计费，购买次数越多越优惠</p>
-                <ul>
-                  <li>购买 100 次以上：9折优惠</li>
-                  <li>购买 500 次以上：8折优惠</li>
-                  <li>购买 2000 次以上：7折优惠</li>
-                </ul>
-              </div>
+      <div class="info-sections">
+        <div class="params-wrapper">
+          <div class="section card param-section">
+            <ParamTable :params="api.requestParams" title="请求参数" />
+          </div>
+
+          <div class="section card param-section">
+            <ParamTable :params="api.responseParams" title="返回参数" />
+          </div>
+        </div>
+
+        <div class="section card">
+          <h3 class="section-title">用户评价 ({{ reviewsTotal }})</h3>
+          <div class="reviews-list">
+            <ReviewThread
+              v-for="review in reviews"
+              :key="review.id"
+              :review="review"
+              :api-user-id="api.userId"
+              :current-user-id="currentUserId"
+              @refresh="fetchReviews"
+            />
+            <div v-if="reviews.length === 0" class="empty-reviews">
+              <el-empty description="暂无评价" />
             </div>
-          </el-tab-pane>
-          
-          <el-tab-pane label="用户评价" name="reviews">
-            <div class="reviews-list">
-              <div v-for="review in reviews" :key="review.id" class="review-item">
-                <div class="review-header">
-                  <el-avatar :size="32">{{ review.username.charAt(0) }}</el-avatar>
-                  <div class="review-info">
-                    <span class="username">{{ review.username }}</span>
-                    <el-rate v-model="review.rating" disabled />
-                  </div>
-                  <span class="time">{{ review.createTime }}</span>
-                </div>
-                <p class="review-content">{{ review.content }}</p>
-                <div v-if="review.reply" class="review-reply">
-                  <span class="label">商家回复：</span>
-                  {{ review.reply }}
-                </div>
-              </div>
-            </div>
-          </el-tab-pane>
-        </el-tabs>
+          </div>
+          <div v-if="reviews.length < reviewsTotal" class="load-more">
+            <el-button 
+              type="primary" 
+              plain 
+              :loading="loadingReviews" 
+              @click="loadMoreReviews"
+            >
+              加载更多
+            </el-button>
+          </div>
+        </div>
       </div>
     </div>
     
@@ -148,6 +121,14 @@
         <el-form-item label="支付金额">
           <span class="total-price">¥{{ calculateTotal }}</span>
         </el-form-item>
+        <div class="discount-info">
+          <p><el-icon><InfoFilled /></el-icon> 优惠说明：</p>
+          <ul>
+            <li>购买 100 次以上：9折优惠</li>
+            <li>购买 500 次以上：8折优惠</li>
+            <li>购买 2000 次以上：7折优惠</li>
+          </ul>
+        </div>
       </el-form>
       <template #footer>
         <el-button @click="showPurchaseDialog = false">取消</el-button>
@@ -163,20 +144,29 @@ import { useRouter, useRoute } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { 
   ArrowLeft, VideoPlay, ShoppingCart, User, Folder, 
-  View, Star, CopyDocument 
+  View, Star, CopyDocument, InfoFilled 
 } from '@element-plus/icons-vue'
 import { apiManagement } from '@/api/api'
 import { tradeApi } from '@/api/trade'
+import { reviewApi, type ApiReview } from '@/api/review'
 import type { ApiItem, ApiParam } from '@/types/api'
 import config from '@/config'
+import { useUserStore } from '@/stores/user'
+import { getMethodType } from '@/utils/status'
+import ReviewThread from '@/components/ReviewThread.vue'
+import ParamTable from '@/components/ParamTable.vue'
 
 const router = useRouter()
 const route = useRoute()
+const userStore = useUserStore()
 
 const loading = ref(false)
-const activeTab = ref('request')
+const loadingReviews = ref(false)
 const showPurchaseDialog = ref(false)
 const baseUrl = config.baseURL
+const reviewsPage = ref(1)
+const reviewsTotal = ref(0)
+const currentUserId = computed(() => userStore.userInfo?.id || 0)
 
 const api = ref<ApiItem>({
   id: 0,
@@ -208,24 +198,7 @@ const purchaseForm = reactive({
   invokeCount: 100
 })
 
-const reviews = ref([
-  {
-    id: 1,
-    username: '用户A',
-    rating: 5,
-    content: 'API响应速度很快，数据准确，非常好用！',
-    reply: '感谢您的支持，我们会继续努力提供更好的服务！',
-    createTime: '2024-01-15'
-  },
-  {
-    id: 2,
-    username: '用户B',
-    rating: 4,
-    content: '功能满足需求，文档清晰，推荐使用！',
-    reply: '',
-    createTime: '2024-01-10'
-  }
-])
+const reviews = ref<ApiReview[]>([])
 
 const getDiscount = (count: number): number => {
   if (count >= 2000) return 0.7
@@ -266,6 +239,29 @@ const fetchApiDetail = async () => {
   }
 }
 
+const fetchReviews = async (page = 1, append = false) => {
+  const id = route.params.id as string
+  loadingReviews.value = true
+  try {
+    const res = await reviewApi.getList(parseInt(id), page, 10, true)
+    if (append) {
+      reviews.value = [...reviews.value, ...(res.data.list || [])]
+    } else {
+      reviews.value = res.data.list || []
+    }
+    reviewsTotal.value = res.data.total || 0
+    reviewsPage.value = page
+  } catch (error) {
+    console.error('获取评价数据失败:', error)
+  } finally {
+    loadingReviews.value = false
+  }
+}
+
+const loadMoreReviews = () => {
+  fetchReviews(reviewsPage.value + 1, true)
+}
+
 const goToTest = () => {
   router.push(`/api/test/${route.params.id}`)
 }
@@ -290,18 +286,9 @@ const handlePurchase = async () => {
   }
 }
 
-const getMethodType = (method: string) => {
-  const types: Record<string, string> = {
-    GET: 'success',
-    POST: 'primary',
-    PUT: 'warning',
-    DELETE: 'danger'
-  }
-  return types[method] || 'info'
-}
-
 onMounted(() => {
   fetchApiDetail()
+  fetchReviews()
 })
 </script>
 
@@ -400,101 +387,52 @@ onMounted(() => {
   font-weight: 600;
 }
 
-.info-tabs {
-  padding: 24px;
-}
-
-.price-info-card {
-  background: #F8FAFC;
-  border-radius: 12px;
-  padding: 24px;
-}
-
-.price-header {
+.info-sections {
   display: flex;
-  align-items: baseline;
-  gap: 12px;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.params-wrapper {
+  display: flex;
+  gap: 24px;
+}
+
+.param-section {
+  flex: 1;
+}
+
+@media (max-width: 992px) {
+  .params-wrapper {
+    flex-direction: column;
+  }
+}
+
+.section {
+  padding: 24px;
+}
+
+.section-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: #1E3A8A;
   margin-bottom: 16px;
 }
 
-.price-header .label {
-  font-size: 14px;
-  color: #64748B;
+.empty-reviews {
+  padding: 32px 0;
 }
 
-.price-header .unit-price {
-  font-size: 28px;
-  font-weight: 700;
-  color: #22C55E;
-}
-
-.price-desc {
-  color: #64748B;
-  font-size: 14px;
-  line-height: 1.8;
-}
-
-.price-desc ul {
-  margin-top: 8px;
-  padding-left: 20px;
-}
-
-.price-desc li {
-  margin-bottom: 4px;
+.load-more {
+  display: flex;
+  justify-content: center;
+  padding-top: 24px;
 }
 
 .reviews-list {
   display: flex;
   flex-direction: column;
   gap: 24px;
-}
-
-.review-item {
-  padding-bottom: 24px;
-  border-bottom: 1px solid #E2E8F0;
-}
-
-.review-header {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-bottom: 12px;
-}
-
-.review-info {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.review-info .username {
-  font-weight: 500;
-  color: #1E3A8A;
-}
-
-.review-header .time {
-  margin-left: auto;
-  font-size: 13px;
-  color: #94A3B8;
-}
-
-.review-content {
-  color: #475569;
-  line-height: 1.6;
-}
-
-.review-reply {
-  background: #F8FAFC;
-  padding: 12px;
-  border-radius: 8px;
-  margin-top: 12px;
-  font-size: 14px;
-  color: #64748B;
-}
-
-.review-reply .label {
-  color: #1E40AF;
-  font-weight: 500;
 }
 
 .total-price {
@@ -514,5 +452,31 @@ onMounted(() => {
 .discount {
   color: #F59E0B;
   font-weight: 500;
+}
+
+.discount-info {
+  background: #FFFBEB;
+  padding: 12px;
+  border-radius: 8px;
+  margin-top: 16px;
+  font-size: 13px;
+  color: #78350F;
+}
+
+.discount-info p {
+  margin: 0 0 8px 0;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.discount-info ul {
+  margin: 0;
+  padding-left: 20px;
+}
+
+.discount-info li {
+  margin-bottom: 4px;
 }
 </style>

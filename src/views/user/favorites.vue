@@ -72,6 +72,7 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import { Delete, View, Star } from '@element-plus/icons-vue'
 import { apiFavorite } from '@/api/api'
 import type { ApiItem } from '@/types/api'
+import { getPriceUnit } from '@/utils/format'
 
 const router = useRouter()
 
@@ -127,15 +128,6 @@ const goToDetail = (id: number) => {
 
 const goToTest = (id: number) => {
   router.push(`/api/test/${id}`)
-}
-
-const getPriceUnit = (unit: string) => {
-  const units: Record<string, string> = {
-    per_call: '次',
-    per_month: '月',
-    per_year: '年'
-  }
-  return units[unit] || unit
 }
 
 watch(() => pagination.page, () => {

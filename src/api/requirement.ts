@@ -42,6 +42,14 @@ export const requirementApi = {
     return request.post(`${apiEndpoints.requirement.cancel}/${id}`)
   },
 
+  deliver(id: string | number, data: { deliveryUrl: string }) {
+    return request.post(`${apiEndpoints.requirement.deliver}/${id}`, data)
+  },
+
+  confirmDelivery(id: string | number) {
+    return request.post(`${apiEndpoints.requirement.confirmDelivery}/${id}`)
+  },
+
   getMyRequirements(params: RequirementListParams) {
     return request.get<{ list: Requirement[]; total: number }>(apiEndpoints.requirement.myRequirements, params)
   }

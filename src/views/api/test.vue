@@ -133,6 +133,7 @@ import { testApi } from '@/api/test'
 import { apiManagement } from '@/api/api'
 import type { ApiItem } from '@/types/api'
 import type { TestRecord } from '@/types/test'
+import { getMethodType } from '@/utils/status'
 
 const MAX_RECORDS = 5
 
@@ -326,16 +327,6 @@ const fetchRecords = async () => {
     console.error('获取记录失败:', error)
     records.value = []
   }
-}
-
-const getMethodType = (method: string) => {
-  const types: Record<string, string> = {
-    GET: 'success',
-    POST: 'primary',
-    PUT: 'warning',
-    DELETE: 'danger'
-  }
-  return types[method] || 'info'
 }
 
 const responseExample = computed(() => {

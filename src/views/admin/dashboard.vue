@@ -93,7 +93,7 @@
             </el-table-column>
             <el-table-column prop="status" label="状态">
               <template #default="{ row }">
-                <el-tag :type="getStatusType(row.status)" size="small">{{ getStatusText(row.status) }}</el-tag>
+                <el-tag :type="getStatusInfo(row.status, ORDER_STATUS).type" size="small">{{ getStatusInfo(row.status, ORDER_STATUS).text }}</el-tag>
               </template>
             </el-table-column>
           </el-table>
@@ -112,6 +112,7 @@ import * as echarts from 'echarts'
 import TimeRangeSelector from '@/components/statistics/TimeRangeSelector.vue'
 import StatsCard from '@/components/statistics/StatsCard.vue'
 import IndicatorSelector from '@/components/statistics/IndicatorSelector.vue'
+import { getStatusInfo, ORDER_STATUS } from '@/utils/status'
 
 const router = useRouter()
 
@@ -294,28 +295,6 @@ watch(selectedIndicators, () => {
 
 const goToAudit = (api: any) => {
   router.push('/admin/apis')
-}
-
-const getStatusType = (status: string) => {
-  const types: Record<string, string> = {
-    pending: 'warning',
-    paid: 'primary',
-    completed: 'success',
-    cancelled: 'danger',
-    refunded: 'info'
-  }
-  return types[status] || 'info'
-}
-
-const getStatusText = (status: string) => {
-  const texts: Record<string, string> = {
-    pending: '待支付',
-    paid: '已支付',
-    completed: '已完成',
-    cancelled: '已取消',
-    refunded: '已退款'
-  }
-  return texts[status] || status
 }
 
 const handleResize = () => {

@@ -41,6 +41,10 @@
             <el-icon><Document /></el-icon>
             <span>需求管理</span>
           </el-menu-item>
+          <el-menu-item index="/admin/after-sales">
+            <el-icon><ChatDotRound /></el-icon>
+            <span>售后管理</span>
+          </el-menu-item>
           <el-menu-item index="/admin/statistics">
             <el-icon><DataLine /></el-icon>
             <span>平台统计</span>
@@ -94,7 +98,7 @@ import { useUserStore } from '@/stores/user'
 import { useAppStore } from '@/stores/app'
 import { 
   DataBoard, User, Box, Grid, List, DataLine, Document,
-  Fold, Expand, SwitchButton 
+  Fold, Expand, SwitchButton, ChatDotRound
 } from '@element-plus/icons-vue'
 
 const route = useRoute()

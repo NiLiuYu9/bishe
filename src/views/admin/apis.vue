@@ -30,7 +30,7 @@
         </el-table-column>
         <el-table-column prop="status" label="状态" width="100">
           <template #default="{ row }">
-            <el-tag :type="getStatusType(row.status)">{{ getStatusText(row.status) }}</el-tag>
+            <StatusTag :status="row.status" type="api" />
           </template>
         </el-table-column>
         <el-table-column prop="updateTime" label="更新时间" width="180" />
@@ -103,6 +103,10 @@ import { ref, reactive, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import { adminApi } from '@/api/admin'
 import type { ApiItem } from '@/types/api'
+import { getMethodType, getStatusInfo, API_STATUS } from '@/utils/status'
+import { getPriceUnit } from '@/utils/format'
+import StatusTag from '@/components/StatusTag.vue'
+import MethodTag from '@/components/MethodTag.vue'
 
 const loading = ref(false)
 const activeTab = ref('all')
@@ -200,45 +204,6 @@ const onlineApi = async (api: ApiItem) => {
     console.error('上架失败:', error)
     ElMessage.error('上架失败')
   }
-}
-
-const getMethodType = (method: string) => {
-  const types: Record<string, string> = {
-    GET: 'success',
-    POST: 'primary',
-    PUT: 'warning',
-    DELETE: 'danger'
-  }
-  return types[method] || 'info'
-}
-
-const getStatusType = (status: string) => {
-  const types: Record<string, string> = {
-    approved: 'success',
-    pending: 'warning',
-    rejected: 'danger',
-    offline: 'info'
-  }
-  return types[status] || 'info'
-}
-
-const getStatusText = (status: string) => {
-  const texts: Record<string, string> = {
-    approved: '已通过',
-    pending: '待审核',
-    rejected: '已拒绝',
-    offline: '已下架'
-  }
-  return texts[status] || status
-}
-
-const getPriceUnit = (unit: string) => {
-  const units: Record<string, string> = {
-    per_call: '次',
-    per_month: '月',
-    per_year: '年'
-  }
-  return units[unit] || unit
 }
 
 onMounted(() => {

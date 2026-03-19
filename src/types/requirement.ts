@@ -8,12 +8,13 @@ export interface Requirement {
   deadline: string
   userId: number
   username: string
-  status: 'open' | 'in_progress' | 'completed' | 'cancelled'
+  status: 'open' | 'in_progress' | 'delivered' | 'completed' | 'cancelled' | 'after_sale' | 'refunded'
   applicants: Applicant[]
   selectedApplicant?: Applicant
   myApplyStatus?: 'pending' | 'accepted' | 'rejected'
   createTime: string
   updateTime: string
+  deliveryUrl?: string
 }
 
 export interface ParamDefinition {

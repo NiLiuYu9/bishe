@@ -8,11 +8,13 @@ export interface ApiItem {
   username: string
   method: 'GET' | 'POST' | 'PUT' | 'DELETE'
   endpoint: string
+  targetUrl?: string
   requestParams: ApiParam[]
   responseParams: ApiParam[]
   price: number
   priceUnit: 'per_call' | 'per_month' | 'per_year'
   callLimit: number
+  whitelistEnabled?: number
   status: 'pending' | 'approved' | 'rejected' | 'offline'
   createTime: string
   updateTime: string

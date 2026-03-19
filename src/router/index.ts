@@ -150,6 +150,12 @@ const routes: RouteRecordRaw[] = [
         meta: { title: '需求管理' }
       },
       {
+        path: 'after-sales',
+        name: 'AdminAfterSales',
+        component: () => import('@/views/admin/after-sales.vue'),
+        meta: { title: '售后管理' }
+      },
+      {
         path: 'statistics',
         name: 'AdminStatistics',
         component: () => import('@/views/admin/statistics.vue'),

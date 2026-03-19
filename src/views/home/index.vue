@@ -85,7 +85,7 @@
           >
             <div class="req-header">
               <h3>{{ req.title }}</h3>
-              <el-tag :type="getStatusType(req.status)" size="small">{{ getStatusText(req.status) }}</el-tag>
+              <StatusTag :status="req.status" type="requirement" size="small" />
             </div>
             <p class="req-desc">{{ req.description }}</p>
             <div class="req-meta">
@@ -157,8 +157,10 @@ import {
 } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import { apiManagement, apiFavorite } from '@/api/api'
+import { getPriceUnit } from '@/utils/format'
 import { requirementApi } from '@/api/requirement'
 import { useUserStore } from '@/stores/user'
+import StatusTag from '@/components/StatusTag.vue'
 import type { ApiItem } from '@/types/api'
 import type { Requirement } from '@/types/requirement'
 
@@ -228,35 +230,6 @@ const toggleFavorite = async (api: ApiItem) => {
   } catch (error) {
     console.error('收藏操作失败:', error)
   }
-}
-
-const getPriceUnit = (unit: string) => {
-  const units: Record<string, string> = {
-    per_call: '次',
-    per_month: '月',
-    per_year: '年'
-  }
-  return units[unit] || unit
-}
-
-const getStatusType = (status: string) => {
-  const types: Record<string, string> = {
-    open: 'success',
-    in_progress: 'warning',
-    completed: 'info',
-    cancelled: 'danger'
-  }
-  return types[status] || 'info'
-}
-
-const getStatusText = (status: string) => {
-  const texts: Record<string, string> = {
-    open: '开放中',
-    in_progress: '进行中',
-    completed: '已完成',
-    cancelled: '已取消'
-  }
-  return texts[status] || status
 }
 
 const getParticleStyle = (index: number) => {

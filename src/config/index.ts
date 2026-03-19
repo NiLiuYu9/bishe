@@ -35,10 +35,10 @@ export const apiEndpoints = {
     apiTypes: '/api/api-types'
   },
   favorite: {
-    add: '/api/favorite/add',
-    remove: '/api/favorite/remove',
-    check: '/api/favorite/check',
-    list: '/api/favorite/list'
+    add: '/favorite/add',
+    remove: '/favorite/remove',
+    check: '/favorite/check',
+    list: '/favorite/list'
   },
   trade: {
     purchase: '/order/create',
@@ -66,7 +66,37 @@ export const apiEndpoints = {
     selectApplicant: '/requirement/select-applicant',
     complete: '/requirement/complete',
     cancel: '/requirement/cancel',
+    deliver: '/requirement/deliver',
+    confirmDelivery: '/requirement/confirm-delivery',
     myRequirements: '/requirement/my-requirements'
+  },
+  whitelist: {
+    add: '/whitelist/add',
+    remove: '/whitelist/remove',
+    list: '/whitelist/list',
+    enable: '/whitelist/enable',
+    disable: '/whitelist/disable'
+  },
+  review: {
+    create: '/review/create',
+    publisherReply: '/review/publisher/reply',
+    update: '/review/update',
+    delete: '/review/delete',
+    userReply: '/review/user/reply',
+    list: '/review/list',
+    myReviews: '/review/my-reviews',
+    detail: '/review/detail'
+  },
+  afterSale: {
+    create: '/requirement/after-sale/create',
+    respond: '/requirement/after-sale/respond',
+    decide: '/requirement/after-sale/decide',
+    detail: '/requirement/after-sale/detail',
+    list: '/requirement/after-sale/list',
+    myAfterSales: '/requirement/after-sale/my-after-sales',
+    developerAfterSales: '/requirement/after-sale/developer-after-sales',
+    messages: '/requirement/after-sale/messages',
+    sendMessage: '/requirement/after-sale/message/send'
   },
   admin: {
     users: '/admin/users',

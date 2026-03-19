@@ -34,7 +34,7 @@
         </el-table-column>
         <el-table-column prop="status" label="状态" width="100">
           <template #default="{ row }">
-            <el-tag :type="getStatusType(row.status)">{{ getStatusText(row.status) }}</el-tag>
+            <StatusTag :status="row.status" type="order" />
           </template>
         </el-table-column>
         <el-table-column prop="createTime" label="创建时间" width="180" :cell-style="{ whiteSpace: 'nowrap' }" />
@@ -60,7 +60,7 @@
       <el-descriptions :column="2" border>
         <el-descriptions-item label="订单号">{{ currentOrder?.orderNo }}</el-descriptions-item>
         <el-descriptions-item label="状态">
-          <el-tag :type="getStatusType(currentOrder?.status || '')">{{ getStatusText(currentOrder?.status || '') }}</el-tag>
+          <StatusTag :status="currentOrder?.status || ''" type="order" />
         </el-descriptions-item>
         <el-descriptions-item label="API名称">{{ currentOrder?.apiName }}</el-descriptions-item>
         <el-descriptions-item label="调用次数">{{ currentOrder?.invokeCount === -1 ? '无限' : currentOrder?.invokeCount }}</el-descriptions-item>
@@ -78,6 +78,7 @@ import { ref, reactive, onMounted, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { adminApi } from '@/api/admin'
 import type { Order } from '@/types/trade'
+import StatusTag from '@/components/StatusTag.vue'
 
 const loading = ref(false)
 const orders = ref<Order[]>([])
@@ -181,28 +182,6 @@ const refundOrder = async (order: Order) => {
   } catch (error) {
     console.error('退款失败', error)
   }
-}
-
-const getStatusType = (status: string) => {
-  const types: Record<string, string> = {
-    pending: 'warning',
-    paid: 'primary',
-    completed: 'success',
-    refunded: 'info',
-    cancelled: 'danger'
-  }
-  return types[status] || 'info'
-}
-
-const getStatusText = (status: string) => {
-  const texts: Record<string, string> = {
-    pending: '待付款',
-    paid: '已付款',
-    completed: '已完成',
-    refunded: '已退款',
-    cancelled: '已取消'
-  }
-  return texts[status] || status
 }
 
 onMounted(() => {

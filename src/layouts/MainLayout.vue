@@ -261,8 +261,11 @@ const loadApiTypes = async () => {
 }
 
 const handleSearch = () => {
-  if (searchKeyword.value.trim()) {
-    router.push({ path: '/api', query: { keyword: searchKeyword.value } })
+  const keyword = searchKeyword.value.trim()
+  if (keyword) {
+    router.push({ path: '/api', query: { keyword } })
+  } else {
+    router.push({ path: '/api' })
   }
 }
 
@@ -292,6 +295,14 @@ watch(
     } else {
       activeTypeId.value = ''
     }
+  },
+  { immediate: true }
+)
+
+watch(
+  () => route.query.keyword,
+  (newKeyword) => {
+    searchKeyword.value = newKeyword as string || ''
   },
   { immediate: true }
 )

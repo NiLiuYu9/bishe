@@ -22,7 +22,7 @@
               <span class="order-no">订单号: {{ order.orderNo }}</span>
               <span class="order-time">{{ order.createTime }}</span>
             </div>
-            <el-tag :type="getStatusType(order.status)">{{ getStatusText(order.status) }}</el-tag>
+            <StatusTag :status="order.status" type="order" />
           </div>
           
           <div class="order-body">
@@ -39,7 +39,7 @@
           <div class="order-rating" v-if="order.status === 'paid' || order.status === 'completed'">
             <div class="rating-header">
               <span class="rating-label">{{ order.rating ? '我的评分' : '给API评分' }}</span>
-              <span v-if="order === editingOrder" class="saving-indicator">
+              <span v-if="editingOrder?.id === order.id" class="saving-indicator">
                 <el-icon class="is-loading"><Loading /></el-icon>
                 保存中...
               </span>
@@ -55,6 +55,44 @@
                 text-color="#ff9900"
                 @change="(value) => handleRatingChange(order, value)"
               />
+            </div>
+            <div class="review-content" v-if="order.rating && !order.reviewContent">
+              <el-input
+                v-model="order._reviewInput"
+                type="textarea"
+                :rows="2"
+                placeholder="写下您的评价内容（选填）"
+              />
+              <el-button type="primary" size="small" @click="submitReview(order)" style="margin-top: 8px;">
+                提交评价
+              </el-button>
+            </div>
+            <div class="review-display" v-if="order.reviewContent">
+              <div class="review-text-wrapper">
+                <span class="review-label">评价内容：</span>
+                <span v-if="!order._editingReview" class="review-text">{{ order.reviewContent }}</span>
+                <el-input
+                  v-else
+                  v-model="order._reviewInput"
+                  type="textarea"
+                  :rows="2"
+                  placeholder="修改评价内容"
+                />
+              </div>
+              <div class="review-actions" v-if="order.reviewId">
+                <template v-if="!order._editingReview">
+                  <el-button text type="primary" size="small" @click="startEditReview(order)">
+                    修改
+                  </el-button>
+                  <el-button text type="danger" size="small" @click="handleDeleteReview(order)">
+                    删除
+                  </el-button>
+                </template>
+                <template v-else>
+                  <el-button size="small" @click="cancelEditReview(order)">取消</el-button>
+                  <el-button type="primary" size="small" @click="handleUpdateReview(order)">保存</el-button>
+                </template>
+              </div>
             </div>
           </div>
           
@@ -91,10 +129,12 @@
 <script setup lang="ts">
 import { ref, reactive, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
-import { ElMessage } from 'element-plus'
+import { ElMessage, ElMessageBox } from 'element-plus'
 import { Loading } from '@element-plus/icons-vue'
 import { tradeApi } from '@/api/trade'
+import { reviewApi } from '@/api/review'
 import type { Order } from '@/types/trade'
+import StatusTag from '@/components/StatusTag.vue'
 
 const router = useRouter()
 
@@ -176,26 +216,68 @@ const handleRatingChange = async (order: Order, value: number) => {
   }
 }
 
-const getStatusType = (status: string) => {
-  const types: Record<string, string> = {
-    pending: 'warning',
-    paid: 'primary',
-    completed: 'success',
-    refunded: 'info',
-    cancelled: 'danger'
+const submitReview = async (order: Order) => {
+  if (!order._reviewInput?.trim()) {
+    ElMessage.warning('请输入评价内容')
+    return
   }
-  return types[status] || 'info'
+  try {
+    const res = await reviewApi.create({
+      orderId: order.id,
+      rating: order.rating || 5,
+      content: order._reviewInput.trim()
+    })
+    order.reviewContent = order._reviewInput.trim()
+    order.reviewId = res.data?.id
+    order._reviewInput = ''
+    ElMessage.success('评价提交成功')
+  } catch (error: any) {
+    console.error('评价提交失败:', error)
+    ElMessage.error(error.message || '评价提交失败')
+  }
 }
 
-const getStatusText = (status: string) => {
-  const texts: Record<string, string> = {
-    pending: '待付款',
-    paid: '已付款',
-    completed: '已完成',
-    refunded: '已退款',
-    cancelled: '已取消'
+const startEditReview = (order: Order) => {
+  order._editingReview = true
+  order._reviewInput = order.reviewContent || ''
+}
+
+const cancelEditReview = (order: Order) => {
+  order._editingReview = false
+  order._reviewInput = ''
+}
+
+const handleUpdateReview = async (order: Order) => {
+  if (!order.reviewId || !order._reviewInput?.trim()) {
+    ElMessage.warning('请输入评价内容')
+    return
   }
-  return texts[status] || status
+  try {
+    await reviewApi.update(order.reviewId, order._reviewInput.trim())
+    order.reviewContent = order._reviewInput.trim()
+    order._editingReview = false
+    order._reviewInput = ''
+    ElMessage.success('修改成功')
+  } catch (error: any) {
+    console.error('修改失败:', error)
+    ElMessage.error(error.message || '修改失败')
+  }
+}
+
+const handleDeleteReview = async (order: Order) => {
+  if (!order.reviewId) return
+  try {
+    await ElMessageBox.confirm('确定要删除该评价吗？', '提示', { type: 'warning' })
+    await reviewApi.delete(order.reviewId)
+    order.reviewContent = undefined
+    order.reviewId = undefined
+    ElMessage.success('删除成功')
+  } catch (error: any) {
+    if (error !== 'cancel') {
+      console.error('删除失败:', error)
+      ElMessage.error(error.message || '删除失败')
+    }
+  }
 }
 
 onMounted(() => {
@@ -336,5 +418,28 @@ onMounted(() => {
 
 .empty-state {
   padding: 80px 0;
+}
+
+.review-display {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.review-text-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.review-text {
+  color: #475569;
+  line-height: 1.6;
+}
+
+.review-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 4px;
 }
 </style>
