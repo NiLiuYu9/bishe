@@ -46,7 +46,9 @@ export const apiEndpoints = {
     orderDetail: '/order/detail',
     updateStatus: '/order/update-status',
     delete: '/order/delete',
-    evaluate: '/order/rate'
+    evaluate: '/order/rate',
+    pay: '/order/pay',
+    queryPayStatus: '/order/pay/query'
   },
   test: {
     testCall: '/test/call',
@@ -102,6 +104,7 @@ export const apiEndpoints = {
     users: '/admin/users',
     freezeUser: '/admin/users',
     unfreezeUser: '/admin/users',
+    exportUsers: '/admin/users/export',
     apis: '/admin/apis',
     apiTypes: '/admin/api-types',
     allApiTypes: '/admin/api-types/all',
@@ -109,6 +112,15 @@ export const apiEndpoints = {
     orders: '/admin/orders',
     statistics: '/admin/statistics',
     requirements: '/admin/requirements'
+  },
+  userTag: {
+    list: '/user-tag/list',
+    save: '/user-tag/save',
+    add: '/user-tag/add',
+    remove: '/user-tag/remove'
+  },
+  matching: {
+    recommend: '/matching/recommend'
   }
 }
 

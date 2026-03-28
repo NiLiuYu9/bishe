@@ -3,9 +3,14 @@
     <div class="page-content">
       <div class="page-header">
         <h1 class="page-title">需求广场</h1>
-        <el-button type="primary" @click="router.push('/user/my-requirements')" v-if="userStore.isLoggedIn">
-          <el-icon><Plus /></el-icon> 发布需求
-        </el-button>
+        <div class="header-actions">
+          <el-button type="success" @click="showRecommendations" v-if="userStore.isLoggedIn">
+            <el-icon><MagicStick /></el-icon> 智能推荐
+          </el-button>
+          <el-button type="primary" @click="router.push('/user/my-requirements')" v-if="userStore.isLoggedIn">
+            <el-icon><Plus /></el-icon> 发布需求
+          </el-button>
+        </div>
       </div>
       
       <div class="filter-section card">
@@ -43,6 +48,15 @@
             
             <p class="req-desc">{{ req.description }}</p>
             
+            <div class="req-tags" v-if="req.tags && req.tags.length > 0">
+              <el-tag v-for="tag in req.tags" :key="tag" size="small" class="tag-item">{{ tag }}</el-tag>
+            </div>
+            
+            <div class="req-match" v-if="req.matchScore !== undefined && req.matchScore !== null">
+              <el-progress :percentage="req.matchScore" :stroke-width="8" :show-text="false" />
+              <span class="match-text">匹配度: {{ req.matchScore.toFixed(1) }}%</span>
+            </div>
+            
             <div class="req-meta">
               <div class="req-info">
                 <span><el-icon><User /></el-icon> {{ req.username }}</span>
@@ -53,7 +67,14 @@
             </div>
             
             <div class="req-footer" v-if="req.status === 'open' && userStore.isLoggedIn">
-              <el-button type="primary" @click.stop="applyRequirement(req)">立即接单</el-button>
+              <template v-if="!req.myApplyStatus">
+                <el-button type="primary" @click.stop="applyRequirement(req)">立即接单</el-button>
+              </template>
+              <template v-else>
+                <el-tag :type="getApplyStatusType(req.myApplyStatus)">
+                  {{ getApplyStatusText(req.myApplyStatus) }}
+                </el-tag>
+              </template>
             </div>
           </div>
         </div>
@@ -64,6 +85,8 @@
             v-model:page-size="pagination.pageSize"
             :total="total"
             layout="total, sizes, prev, pager, next"
+            @current-change="handlePageChange"
+            @size-change="handleSizeChange"
           />
         </div>
       </div>
@@ -90,23 +113,26 @@
 
 <script setup lang="ts">
 import { ref, reactive, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import { Plus, User, Money, Calendar } from '@element-plus/icons-vue'
+import { Plus, User, Money, Calendar, MagicStick } from '@element-plus/icons-vue'
 import { requirementApi } from '@/api/requirement'
 import { apiManagement } from '@/api/api'
 import { useUserStore } from '@/stores/user'
+import { tagApi } from '@/api/tag'
 import StatusTag from '@/components/StatusTag.vue'
 import type { Requirement } from '@/types/requirement'
 import type { ApiType } from '@/types/api'
 
 const router = useRouter()
+const route = useRoute()
 const userStore = useUserStore()
 
 const loading = ref(false)
 const requirements = ref<Requirement[]>([])
 const total = ref(0)
 const types = ref<ApiType[]>([])
+const isRecommendMode = ref(false)
 
 const applyDialogVisible = ref(false)
 const currentReq = ref<Requirement | null>(null)
@@ -123,8 +149,6 @@ const pagination = reactive({
   pageSize: 10
 })
 
-
-
 const fetchTypes = async () => {
   try {
     const res = await apiManagement.getApiTypes({ pageNum: 1, pageSize: 100 })
@@ -136,6 +160,7 @@ const fetchTypes = async () => {
 
 const fetchRequirements = async () => {
   loading.value = true
+  isRecommendMode.value = false
   try {
     const res = await requirementApi.getList({
       pageNum: pagination.pageNum,
@@ -153,9 +178,53 @@ const fetchRequirements = async () => {
   }
 }
 
+const showRecommendations = async () => {
+  loading.value = true
+  isRecommendMode.value = true
+  try {
+    const res = await tagApi.getRecommendedRequirements({
+      pageNum: pagination.pageNum,
+      pageSize: pagination.pageSize
+    })
+    requirements.value = res.data.list
+    total.value = res.data.total
+    if (requirements.value.length === 0) {
+      ElMessage.warning('暂无匹配的需求，请先在个人资料页面设置技能标签')
+    }
+  } catch (error) {
+    console.error('获取推荐需求失败', error)
+    ElMessage.error('获取推荐需求失败')
+    requirements.value = []
+    total.value = 0
+  } finally {
+    loading.value = false
+  }
+}
+
 const handleSearch = () => {
   pagination.pageNum = 1
-  fetchRequirements()
+  if (isRecommendMode.value) {
+    showRecommendations()
+  } else {
+    fetchRequirements()
+  }
+}
+
+const handlePageChange = () => {
+  if (isRecommendMode.value) {
+    showRecommendations()
+  } else {
+    fetchRequirements()
+  }
+}
+
+const handleSizeChange = () => {
+  pagination.pageNum = 1
+  if (isRecommendMode.value) {
+    showRecommendations()
+  } else {
+    fetchRequirements()
+  }
 }
 
 const resetFilters = () => {
@@ -163,7 +232,11 @@ const resetFilters = () => {
   filters.minBudget = undefined
   filters.maxBudget = undefined
   pagination.pageNum = 1
-  fetchRequirements()
+  if (isRecommendMode.value) {
+    showRecommendations()
+  } else {
+    fetchRequirements()
+  }
 }
 
 const goToDetail = (id: number) => {
@@ -183,15 +256,38 @@ const submitApply = async () => {
     await requirementApi.apply(currentReq.value.id, { description: applyForm.description })
     ElMessage.success('申请成功')
     applyDialogVisible.value = false
+    fetchRequirements()
   } catch (error) {
     console.error('申请失败:', error)
     ElMessage.error('申请失败')
   }
 }
 
+const getApplyStatusType = (status: string) => {
+  const types: Record<string, string> = {
+    pending: 'warning',
+    accepted: 'success',
+    rejected: 'danger'
+  }
+  return types[status] || 'info'
+}
+
+const getApplyStatusText = (status: string) => {
+  const texts: Record<string, string> = {
+    pending: '申请中',
+    accepted: '已接单',
+    rejected: '已拒绝'
+  }
+  return texts[status] || status
+}
+
 onMounted(() => {
   fetchTypes()
-  fetchRequirements()
+  if (route.query.autoMatch === 'true' && userStore.isLoggedIn) {
+    showRecommendations()
+  } else {
+    fetchRequirements()
+  }
 })
 </script>
 
@@ -253,6 +349,37 @@ onMounted(() => {
   color: #475569;
   margin-bottom: 16px;
   line-height: 1.6;
+}
+
+.req-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.tag-item {
+  background: #E0F2FE;
+  color: #0369A1;
+  border: none;
+}
+
+.req-match {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.req-match .el-progress {
+  flex: 1;
+  max-width: 200px;
+}
+
+.match-text {
+  font-size: 13px;
+  color: #059669;
+  font-weight: 500;
 }
 
 .req-meta {

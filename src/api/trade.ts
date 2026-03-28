@@ -28,5 +28,13 @@ export const tradeApi = {
 
   evaluate(id: string | number, rating: number) {
     return request.post<void>(`${apiEndpoints.trade.evaluate}/${id}`, { rating })
+  },
+
+  pay(orderId: number | string) {
+    return request.post<string>(`${apiEndpoints.trade.pay}/${orderId}`)
+  },
+
+  queryPayStatus(orderId: number | string) {
+    return request.get<{ tradeStatus: string; orderStatus: string }>(`${apiEndpoints.trade.queryPayStatus}/${orderId}`)
   }
 }

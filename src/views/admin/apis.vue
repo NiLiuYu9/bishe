@@ -69,6 +69,10 @@
         <el-descriptions-item label="价格">¥{{ currentApi?.price }}/{{ getPriceUnit(currentApi?.priceUnit || '') }}</el-descriptions-item>
         <el-descriptions-item label="调用限制">{{ currentApi?.callLimit || '不限' }}</el-descriptions-item>
         <el-descriptions-item label="功能描述" :span="2">{{ currentApi?.description }}</el-descriptions-item>
+        <el-descriptions-item label="技术文档" :span="2">
+          <a v-if="currentApi?.docUrl" :href="currentApi.docUrl" target="_blank" rel="noopener noreferrer" class="doc-link">{{ currentApi.docUrl }}</a>
+          <span v-else class="no-doc">未提供</span>
+        </el-descriptions-item>
       </el-descriptions>
       
       <div class="mt-24" v-if="currentApi?.requestParams && currentApi.requestParams.length > 0">
@@ -226,5 +230,19 @@ onMounted(() => {
   display: flex;
   justify-content: center;
   margin-top: 24px;
+}
+
+.doc-link {
+  color: #1E40AF;
+  text-decoration: none;
+  word-break: break-all;
+}
+
+.doc-link:hover {
+  text-decoration: underline;
+}
+
+.no-doc {
+  color: #9CA3AF;
 }
 </style>

@@ -47,6 +47,17 @@
             </el-button>
           </div>
         </div>
+        
+        <div v-if="api.docUrl" class="api-doc">
+          <h3>技术文档</h3>
+          <div class="doc-box">
+            <el-icon><Document /></el-icon>
+            <a href="javascript:void(0)" @click="goToDocPage">{{ api.docUrl }}</a>
+            <el-button text @click="goToDocPage">
+              <el-icon><Link /></el-icon>
+            </el-button>
+          </div>
+        </div>
       </div>
       
       <div class="info-sections">
@@ -57,6 +68,18 @@
 
           <div class="section card param-section">
             <ParamTable :params="api.responseParams" title="返回参数" />
+          </div>
+        </div>
+
+        <div v-if="showAuditButtons" class="audit-actions card">
+          <div class="audit-title">审核操作</div>
+          <div class="audit-buttons">
+            <el-button type="danger" @click="showRejectDialog = true">
+              <el-icon><Close /></el-icon> 拒绝
+            </el-button>
+            <el-button type="success" @click="handleApprove">
+              <el-icon><Check /></el-icon> 通过
+            </el-button>
           </div>
         </div>
 
@@ -135,6 +158,18 @@
         <el-button type="primary" @click="handlePurchase">确认购买</el-button>
       </template>
     </el-dialog>
+    
+    <el-dialog v-model="showRejectDialog" title="拒绝原因" width="400px">
+      <el-form :model="rejectForm" label-width="80px">
+        <el-form-item label="拒绝原因">
+          <el-input v-model="rejectForm.reason" type="textarea" :rows="3" placeholder="请输入拒绝原因" />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="showRejectDialog = false">取消</el-button>
+        <el-button type="danger" @click="handleReject">确认拒绝</el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
@@ -144,11 +179,12 @@ import { useRouter, useRoute } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { 
   ArrowLeft, VideoPlay, ShoppingCart, User, Folder, 
-  View, Star, CopyDocument, InfoFilled 
+  View, Star, CopyDocument, InfoFilled, Check, Close, Document, Link
 } from '@element-plus/icons-vue'
 import { apiManagement } from '@/api/api'
 import { tradeApi } from '@/api/trade'
 import { reviewApi, type ApiReview } from '@/api/review'
+import { adminApi } from '@/api/admin'
 import type { ApiItem, ApiParam } from '@/types/api'
 import config from '@/config'
 import { useUserStore } from '@/stores/user'
@@ -163,10 +199,18 @@ const userStore = useUserStore()
 const loading = ref(false)
 const loadingReviews = ref(false)
 const showPurchaseDialog = ref(false)
+const showRejectDialog = ref(false)
 const baseUrl = config.baseURL
 const reviewsPage = ref(1)
 const reviewsTotal = ref(0)
 const currentUserId = computed(() => userStore.userInfo?.id || 0)
+
+const showAuditButtons = computed(() => {
+  const isAdmin = userStore.userInfo?.isAdmin === 1
+  const isFromAdmin = route.query.from === 'admin'
+  const isPending = api.value.status === 'pending'
+  return isAdmin && isFromAdmin && isPending
+})
 
 const api = ref<ApiItem>({
   id: 0,
@@ -197,6 +241,8 @@ const purchaseForm = reactive({
   countOption: '100',
   invokeCount: 100
 })
+
+const rejectForm = reactive({ reason: '' })
 
 const reviews = ref<ApiReview[]>([])
 
@@ -271,18 +317,60 @@ const copyEndpoint = () => {
   ElMessage.success('已复制到剪贴板')
 }
 
+const goToDocPage = () => {
+  router.push({
+    path: `/api/doc/${route.params.id}`,
+    query: {
+      name: api.value.name,
+      endpoint: api.value.endpoint,
+      method: api.value.method
+    }
+  })
+}
+
 const handlePurchase = async () => {
   try {
-    await tradeApi.purchase({
+    const res = await tradeApi.purchase({
       apiId: api.value.id,
       invokeCount: purchaseForm.invokeCount
     })
-    ElMessage.success('购买成功')
+    ElMessage.success('订单创建成功，请前往订单页面完成支付')
     showPurchaseDialog.value = false
+    router.push('/user/orders')
+  } catch (error: any) {
+    console.error('创建订单失败:', error)
+    ElMessage.error(error.message || '创建订单失败，请重试')
+  }
+}
+
+const handleApprove = async () => {
+  try {
+    await adminApi.updateApiStatus(api.value.id, { status: 'approved' })
+    ElMessage.success('审核通过')
+    router.push('/admin/apis')
   } catch (error) {
-    console.error('购买失败:', error)
-    ElMessage.success('购买成功（模拟）')
-    showPurchaseDialog.value = false
+    console.error('审核失败:', error)
+    ElMessage.error('审核失败')
+  }
+}
+
+const handleReject = async () => {
+  if (!rejectForm.reason.trim()) {
+    ElMessage.warning('请输入拒绝原因')
+    return
+  }
+  
+  try {
+    await adminApi.updateApiStatus(api.value.id, { 
+      status: 'rejected', 
+      reason: rejectForm.reason 
+    })
+    ElMessage.success('已拒绝')
+    showRejectDialog.value = false
+    router.push('/admin/apis')
+  } catch (error) {
+    console.error('操作失败:', error)
+    ElMessage.error('操作失败')
   }
 }
 
@@ -387,6 +475,32 @@ onMounted(() => {
   font-weight: 600;
 }
 
+.api-doc {
+  margin-top: 24px;
+}
+
+.doc-box {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: #EFF6FF;
+  padding: 12px 16px;
+  border-radius: 8px;
+  border: 1px solid #BFDBFE;
+}
+
+.doc-box a {
+  color: #1E40AF;
+  text-decoration: none;
+  font-size: 14px;
+  word-break: break-all;
+  flex: 1;
+}
+
+.doc-box a:hover {
+  text-decoration: underline;
+}
+
 .info-sections {
   display: flex;
   flex-direction: column;
@@ -478,5 +592,25 @@ onMounted(() => {
 
 .discount-info li {
   margin-bottom: 4px;
+}
+
+.audit-actions {
+  margin-top: 24px;
+  padding: 24px;
+  background: #FEF3C7;
+  border: 1px solid #FCD34D;
+}
+
+.audit-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #92400E;
+  margin-bottom: 16px;
+}
+
+.audit-buttons {
+  display: flex;
+  gap: 16px;
+  justify-content: center;
 }
 </style>

@@ -4,15 +4,6 @@ export * from './trade'
 export * from './test'
 export * from './requirement'
 
-export interface ApiType {
-  id: number
-  name: string
-  description: string
-  status: string
-  createTime?: string
-  updateTime?: string
-}
-
 export interface User {
   id: number
   username: string

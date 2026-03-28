@@ -36,6 +36,7 @@
         
         <div class="header-right">
           <template v-if="userStore.isLoggedIn">
+            <NotificationBell />
             <div class="quick-use-wrapper" @mouseenter="showDropdown" @mouseleave="hideDropdown">
               <el-button text class="quick-use-btn">
                 <el-icon><Document /></el-icon>
@@ -109,6 +110,7 @@ import { ElMessage } from 'element-plus'
 import { apiManagement } from '@/api/api'
 import type { ApiType } from '@/types/api'
 import Sidebar from '@/components/Sidebar.vue'
+import NotificationBell from '@/components/NotificationBell.vue'
 
 const router = useRouter()
 const route = useRoute()

@@ -32,6 +32,12 @@ const routes: RouteRecordRaw[] = [
         meta: { title: 'API测试', requiresAuth: true }
       },
       {
+        path: 'api/doc/:id',
+        name: 'ApiDoc',
+        component: () => import('@/views/api/doc.vue'),
+        meta: { title: '技术文档' }
+      },
+      {
         path: 'requirement',
         name: 'RequirementList',
         component: () => import('@/views/requirement/list.vue'),

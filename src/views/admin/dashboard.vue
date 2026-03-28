@@ -294,7 +294,7 @@ watch(selectedIndicators, () => {
 }, { deep: true })
 
 const goToAudit = (api: any) => {
-  router.push('/admin/apis')
+  router.push(`/api/${api.id}?from=admin`)
 }
 
 const handleResize = () => {

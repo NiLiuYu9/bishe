@@ -26,7 +26,11 @@
     
     <div class="orders-table card">
       <el-table :data="orders" border v-loading="loading">
-        <el-table-column prop="orderNo" label="订单号" width="180" />
+        <el-table-column prop="orderNo" label="订单号" width="180">
+          <template #default="{ row }">
+            <span v-html="highlightText(row.orderNo, filters.orderNo)"></span>
+          </template>
+        </el-table-column>
         <el-table-column prop="apiName" label="API名称" />
         <el-table-column prop="buyerName" label="买家" width="120" />
         <el-table-column prop="price" label="金额" width="100">
@@ -52,6 +56,8 @@
           v-model:page-size="pagination.pageSize"
           :total="total"
           layout="total, sizes, prev, pager, next"
+          @current-change="fetchOrders"
+          @size-change="handleSearch"
         />
       </div>
     </div>
@@ -97,51 +103,20 @@ const pagination = reactive({
   pageSize: 10
 })
 
-const mockOrders: Order[] = [
-  {
-    id: 1,
-    orderNo: 'ORD202401180001',
-    apiId: 1,
-    apiName: '天气查询API',
-    buyerId: 1,
-    buyerName: 'user1',
-    invokeCount: 500,
-    price: 45,
-    status: 'completed',
-    createTime: '2024-01-18 10:30:00',
-    payTime: '2024-01-18 10:35:00',
-    completeTime: '2024-01-18 10:35:00'
-  },
-  {
-    id: 2,
-    orderNo: 'ORD202401180002',
-    apiId: 2,
-    apiName: '身份证OCR识别',
-    buyerId: 2,
-    buyerName: 'user2',
-    invokeCount: 100,
-    price: 10,
-    status: 'pending',
-    createTime: '2024-01-18 14:20:00',
-    payTime: '',
-    completeTime: ''
-  }
-]
-
 const fetchOrders = async () => {
   loading.value = true
   try {
     const res = await adminApi.getOrders({
       page: pagination.page,
       pageSize: pagination.pageSize,
-      status: filters.status || undefined
+      status: filters.status || undefined,
+      orderNo: filters.orderNo || undefined
     })
     orders.value = res.data.list
     total.value = res.data.total
   } catch (error) {
     console.error('获取订单失败:', error)
-    orders.value = mockOrders
-    total.value = mockOrders.length
+    ElMessage.error('获取订单失败，请稍后重试')
   } finally {
     loading.value = false
   }
@@ -184,6 +159,12 @@ const refundOrder = async (order: Order) => {
   }
 }
 
+const highlightText = (text: string, keyword: string) => {
+  if (!keyword || !text) return text
+  const regex = new RegExp(`(${keyword})`, 'gi')
+  return text.replace(regex, '<span class="highlight">$1</span>')
+}
+
 onMounted(() => {
   fetchOrders()
 })
@@ -202,5 +183,13 @@ onMounted(() => {
   display: flex;
   justify-content: center;
   margin-top: 24px;
+}
+
+:deep(.highlight) {
+  background-color: #ffeb3b;
+  color: #000;
+  padding: 0 2px;
+  border-radius: 2px;
+  font-weight: 500;
 }
 </style>

@@ -1,9 +1,31 @@
 import { request, apiEndpoints } from '@/utils/request'
+import axios from 'axios'
+import config from '@/config'
 import type { User, ApiItem, ApiType, Order, PlatformStatistics, Requirement } from '@/types'
 
 export const adminApi = {
   getUsers(params: { pageNum: number; pageSize: number; username?: string; status?: number }) {
     return request.get<{ list: User[]; total: number }>(apiEndpoints.admin.users, params)
+  },
+
+  exportUsers(params: { username?: string; status?: number }) {
+    const queryParams = new URLSearchParams()
+    if (params.username) queryParams.append('username', params.username)
+    if (params.status !== undefined && params.status !== null) queryParams.append('status', String(params.status))
+    
+    return axios.get(`${config.baseURL}${apiEndpoints.admin.exportUsers}?${queryParams.toString()}`, {
+      withCredentials: true,
+      responseType: 'blob'
+    }).then(response => {
+      const url = window.URL.createObjectURL(new Blob([response.data]))
+      const link = document.createElement('a')
+      link.href = url
+      link.setAttribute('download', 'users_export.xlsx')
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      window.URL.revokeObjectURL(url)
+    })
   },
 
   freezeUser(id: string | number, data: { reason: string }) {

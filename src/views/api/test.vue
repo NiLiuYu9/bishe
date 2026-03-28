@@ -182,33 +182,8 @@ const fetchApiDetail = async () => {
     fetchRecords()
   } catch (error) {
     console.error('获取API详情失败:', error)
-    api.value = {
-      id: 1,
-      name: '天气查询API',
-      description: '支持全国城市天气查询',
-      typeName: '数据查询',
-      typeId: 1,
-      userId: 1,
-      username: 'developer1',
-      method: 'GET',
-      endpoint: '/weather/query',
-      requestParams: [
-        { name: 'city', type: 'string', required: true, description: '城市名称', example: '北京' },
-        { name: 'type', type: 'string', required: false, description: '查询类型', example: 'now' }
-      ],
-      responseParams: [],
-      price: 0.01,
-      priceUnit: 'per_call',
-      callLimit: 1000,
-      status: 'approved',
-      createTime: '2024-01-01',
-      updateTime: '2024-01-01',
-      docUrl: '',
-      rating: 4.8,
-      invokeCount: 125680,
-      successCount: 125000,
-      failCount: 680
-    }
+    ElMessage.error('获取API详情失败')
+    router.back()
   }
 }
 

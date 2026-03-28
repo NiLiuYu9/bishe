@@ -1,13 +1,13 @@
 import { request, apiEndpoints } from '@/utils/request'
-import type { LoginParams, RegisterParams, UserInfo } from '@/types/auth'
+import type { LoginParams, RegisterParams, UserInfo, LoginResult } from '@/types/auth'
 
 export const authApi = {
   login(params: LoginParams) {
-    return request.post<UserInfo>(apiEndpoints.auth.login, params)
+    return request.post<LoginResult>(apiEndpoints.auth.login, params)
   },
 
   register(params: RegisterParams) {
-    return request.post<UserInfo>(apiEndpoints.auth.register, params)
+    return request.post<void>(apiEndpoints.auth.register, params)
   },
 
   logout() {

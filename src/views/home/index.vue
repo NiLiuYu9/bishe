@@ -23,6 +23,12 @@
             </template>
           </el-input>
         </div>
+        <div class="smart-match-btn">
+          <el-button type="success" size="large" @click="handleSmartMatch">
+            <el-icon><MagicStick /></el-icon>
+            智能匹配需求
+          </el-button>
+        </div>
       </div>
     </section>
     
@@ -144,6 +150,22 @@
         </el-button>
       </div>
     </section>
+    
+    <el-dialog 
+      v-model="showTagDialog" 
+      title="设置技能标签" 
+      width="500px"
+      :close-on-click-modal="false"
+    >
+      <div class="tag-dialog-content">
+        <p class="tag-dialog-desc">请设置您的技能标签，系统将为您智能推荐匹配的需求</p>
+        <TagInput v-model="userTags" placeholder="输入技能标签，如：Java、Vue、Python" />
+      </div>
+      <template #footer>
+        <el-button @click="showTagDialog = false">取消</el-button>
+        <el-button type="primary" @click="saveTagsAndMatch">保存并开始匹配</el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
@@ -153,14 +175,16 @@ import { useRouter } from 'vue-router'
 import { 
   Search, ArrowRight, View, Star, StarFilled, Lock, 
   TrendCharts, Monitor, ChatDotRound,
-  User, Money, Calendar
+  User, Money, Calendar, MagicStick
 } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import { apiManagement, apiFavorite } from '@/api/api'
 import { getPriceUnit } from '@/utils/format'
 import { requirementApi } from '@/api/requirement'
+import { tagApi } from '@/api/tag'
 import { useUserStore } from '@/stores/user'
 import StatusTag from '@/components/StatusTag.vue'
+import TagInput from '@/components/TagInput.vue'
 import type { ApiItem } from '@/types/api'
 import type { Requirement } from '@/types/requirement'
 
@@ -170,6 +194,9 @@ const userStore = useUserStore()
 const searchKeyword = ref('')
 const featuredApis = ref<ApiItem[]>([])
 const requirements = ref<Requirement[]>([])
+const showTagDialog = ref(false)
+const userTags = ref<string[]>([])
+const pendingMatch = ref(false)
 
 const loadFeaturedApis = async () => {
   try {
@@ -230,6 +257,51 @@ const toggleFavorite = async (api: ApiItem) => {
   } catch (error) {
     console.error('收藏操作失败:', error)
   }
+}
+
+const handleSmartMatch = async () => {
+  if (!userStore.isLoggedIn) {
+    ElMessage.warning('请先登录后再使用智能匹配功能')
+    router.push('/login')
+    return
+  }
+  
+  try {
+    const res = await tagApi.getUserTags()
+    const tags = res.data || []
+    
+    if (tags.length === 0) {
+      userTags.value = []
+      pendingMatch.value = true
+      showTagDialog.value = true
+    } else {
+      startMatching()
+    }
+  } catch (error) {
+    console.error('获取用户标签失败', error)
+    ElMessage.error('获取用户标签失败')
+  }
+}
+
+const saveTagsAndMatch = async () => {
+  if (userTags.value.length === 0) {
+    ElMessage.warning('请至少添加一个技能标签')
+    return
+  }
+  
+  try {
+    await tagApi.saveUserTags(userTags.value)
+    ElMessage.success('标签保存成功')
+    showTagDialog.value = false
+    startMatching()
+  } catch (error) {
+    console.error('保存标签失败', error)
+    ElMessage.error('保存标签失败')
+  }
+}
+
+const startMatching = () => {
+  router.push('/requirement?autoMatch=true')
 }
 
 const getParticleStyle = (index: number) => {
@@ -676,6 +748,32 @@ const getParticleStyle = (index: number) => {
 .cta-buttons :deep(.el-button:not(.el-button--primary):hover) {
   background: rgba(255, 255, 255, 0.1);
   border-color: #fff;
+}
+
+.smart-match-btn {
+  margin-top: 16px;
+}
+
+.smart-match-btn :deep(.el-button) {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.3);
+  color: #fff;
+  backdrop-filter: blur(8px);
+}
+
+.smart-match-btn :deep(.el-button:hover) {
+  background: rgba(255, 255, 255, 0.3);
+  border-color: rgba(255, 255, 255, 0.5);
+}
+
+.tag-dialog-content {
+  padding: 8px 0;
+}
+
+.tag-dialog-desc {
+  color: #64748B;
+  font-size: 14px;
+  margin-bottom: 16px;
 }
 
 @media (max-width: 768px) {

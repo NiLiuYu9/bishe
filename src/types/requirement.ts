@@ -15,6 +15,8 @@ export interface Requirement {
   createTime: string
   updateTime: string
   deliveryUrl?: string
+  tags?: string[]
+  matchScore?: number
 }
 
 export interface ParamDefinition {
@@ -41,6 +43,7 @@ export interface RequirementCreateParams {
   responseParams: ParamDefinition[]
   budget: number
   deadline: string
+  tags?: string[]
 }
 
 export interface RequirementListParams {

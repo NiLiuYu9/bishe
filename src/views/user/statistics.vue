@@ -227,7 +227,7 @@ const handleTimeRangeChange = () => {
 const fetchApiTypes = async () => {
   try {
     const res = await apiManagement.getTypes()
-    apiTypes.value = res.data
+    apiTypes.value = res.data?.list || []
   } catch (error) {
     console.error('获取API分类失败:', error)
   }

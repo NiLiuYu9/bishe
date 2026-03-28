@@ -10,15 +10,13 @@ export const useUserStore = defineStore('user', () => {
 
   async function login(params: LoginParams) {
     const res = await authApi.login(params)
-    userInfo.value = res.data as UserInfo
-    saveToStorage()
+    await getUserInfo()
     return res
   }
 
   async function register(params: RegisterParams) {
     const res = await authApi.register(params)
-    userInfo.value = res.data as UserInfo
-    saveToStorage()
+    await getUserInfo()
     return res
   }
 

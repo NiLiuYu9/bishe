@@ -129,7 +129,7 @@ const showCreateDialog = ref(false)
 const fetchTypes = async () => {
   try {
     const res = await apiManagement.getTypes()
-    types.value = res.data || []
+    types.value = res.data?.list || []
   } catch (error) {
     console.error('获取类型列表失败:', error)
     types.value = []

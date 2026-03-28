@@ -2,6 +2,7 @@
   <div class="admin-users-page">
     <div class="page-header">
       <h2 class="page-title">用户管理</h2>
+      <el-button type="success" @click="handleExport">导出用户</el-button>
     </div>
     
     <div class="filter-section card">
@@ -71,6 +72,8 @@
           v-model:page-size="pagination.pageSize"
           :total="total"
           layout="total, sizes, prev, pager, next"
+          @current-change="fetchUsers"
+          @size-change="handleSearch"
         />
       </div>
     </div>
@@ -198,6 +201,19 @@ const unfreezeUser = async (user: User) => {
   } catch (error) {
     console.error('解冻失败:', error)
     ElMessage.error('解冻失败')
+  }
+}
+
+const handleExport = async () => {
+  try {
+    await adminApi.exportUsers({
+      username: filters.username,
+      status: filters.status ?? undefined
+    })
+    ElMessage.success('导出成功')
+  } catch (error) {
+    console.error('导出失败:', error)
+    ElMessage.error('导出失败')
   }
 }
 

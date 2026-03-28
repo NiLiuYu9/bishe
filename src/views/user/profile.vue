@@ -31,6 +31,18 @@
           </el-form-item>
         </el-form>
       </div>
+
+      <div class="skill-section card">
+        <div class="section-header">
+          <el-icon><CollectionTag /></el-icon>
+          <h3>技能标签</h3>
+        </div>
+        <div class="skill-content">
+          <p class="skill-desc">设置您的技能标签，系统将为您智能推荐匹配的需求</p>
+          <TagInput v-model="userTags" placeholder="输入技能标签，如：Java、Vue、Python" />
+          <el-button type="primary" @click="saveTags" style="margin-top: 16px;">保存标签</el-button>
+        </div>
+      </div>
       
       <div class="security-section card">
         <div class="section-header">
@@ -113,10 +125,12 @@
 <script setup lang="ts">
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
-import { WarningFilled, User, Lock } from '@element-plus/icons-vue'
+import { WarningFilled, User, Lock, CollectionTag } from '@element-plus/icons-vue'
 import { useUserStore } from '@/stores/user'
 import { authApi } from '@/api/auth'
 import { accessKeyApi } from '@/api/accessKey'
+import { tagApi } from '@/api/tag'
+import TagInput from '@/components/TagInput.vue'
 
 const userStore = useUserStore()
 
@@ -127,6 +141,8 @@ const userInfo = reactive({
   isAdmin: 0
 })
 
+const userTags = ref<string[]>([])
+
 onMounted(async () => {
   try {
     await userStore.getUserInfo()
@@ -134,6 +150,7 @@ onMounted(async () => {
     userInfo.email = userStore.userInfo?.email || ''
     userInfo.phone = userStore.userInfo?.phone || ''
     userInfo.isAdmin = userStore.userInfo?.isAdmin || 0
+    userTags.value = userStore.userInfo?.tags || []
   } catch (error) {
     console.error('获取用户信息失败', error)
   }
@@ -143,6 +160,12 @@ onMounted(async () => {
     secretKey.value = res.data.secretKey
   } catch (error) {
     console.error('获取AccessKey失败', error)
+  }
+  try {
+    const res = await tagApi.getUserTags()
+    userTags.value = res.data || []
+  } catch (error) {
+    console.error('获取用户标签失败', error)
   }
 })
 
@@ -168,6 +191,16 @@ const saveProfile = async () => {
     ElMessage.success('保存成功')
   } catch (error) {
     console.error('保存失败', error)
+  }
+}
+
+const saveTags = async () => {
+  try {
+    await tagApi.saveUserTags(userTags.value)
+    ElMessage.success('标签保存成功')
+  } catch (error) {
+    console.error('保存标签失败', error)
+    ElMessage.error('保存标签失败')
   }
 }
 
@@ -282,6 +315,16 @@ const regenerateKeys = async () => {
 
 .info-form {
   padding: 0 8px;
+}
+
+.skill-content {
+  padding: 0 8px;
+}
+
+.skill-desc {
+  color: #64748B;
+  font-size: 14px;
+  margin-bottom: 16px;
 }
 
 .security-list {

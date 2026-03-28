@@ -5,6 +5,7 @@
     <el-tabs v-model="activeTab" @tab-change="handleTabChange">
       <el-tab-pane label="全部" name="all" />
       <el-tab-pane label="待付款" name="pending" />
+      <el-tab-pane label="已支付" name="paid" />
       <el-tab-pane label="已完成" name="completed" />
       <el-tab-pane label="已退款" name="refunded" />
       <el-tab-pane label="已取消" name="cancelled" />
@@ -127,7 +128,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted, watch } from 'vue'
+import { ref, reactive, onMounted, onUnmounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Loading } from '@element-plus/icons-vue'
@@ -144,6 +145,7 @@ const orders = ref<Order[]>([])
 const total = ref(0)
 const editingOrder = ref<Order | null>(null)
 const debounceTimer = ref<NodeJS.Timeout | null>(null)
+const pollingTimers = ref<Map<number, NodeJS.Timeout>>(new Map())
 
 const pagination = reactive({
   page: 1,
@@ -186,12 +188,22 @@ watch(() => pagination.pageSize, () => {
 
 const handlePay = async (order: Order) => {
   try {
-    await tradeApi.updateOrderStatus(order.id, 'completed')
-    ElMessage.success('支付成功')
-    fetchOrders()
-  } catch (error) {
-    console.error('支付失败:', error)
-    ElMessage.error('支付失败')
+    const res = await tradeApi.pay(order.id)
+    const form = res.data
+    const div = document.createElement('div')
+    div.innerHTML = form
+    const formElement = div.getElementsByTagName('form')[0]
+    if (formElement) {
+      document.body.appendChild(div)
+      formElement.submit()
+      // 启动支付状态轮询
+      startPaymentPolling(order.id)
+    } else {
+      ElMessage.error('获取支付表单失败')
+    }
+  } catch (error: any) {
+    console.error('发起支付失败:', error)
+    ElMessage.error(error.message || '发起支付失败')
   }
 }
 
@@ -280,8 +292,54 @@ const handleDeleteReview = async (order: Order) => {
   }
 }
 
+const checkPaymentStatus = async (orderId: number) => {
+  try {
+    const res = await tradeApi.queryPayStatus(orderId)
+    if (res.data?.orderStatus === 'paid') {
+      ElMessage.success('支付成功')
+      fetchOrders()
+      return true
+    }
+    return false
+  } catch (error) {
+    console.error('查询支付状态失败:', error)
+    return false
+  }
+}
+
+const startPaymentPolling = (orderId: number) => {
+  // 如果已经在轮询这个订单，先清除
+  if (pollingTimers.value.has(orderId)) {
+    clearInterval(pollingTimers.value.get(orderId))
+  }
+
+  let count = 0
+  const maxCount = 120 // 增加到6分钟，给用户更多支付时间
+  const timer = setInterval(async () => {
+    count++
+    const paid = await checkPaymentStatus(orderId)
+    if (paid || count >= maxCount) {
+      clearInterval(timer)
+      pollingTimers.value.delete(orderId)
+    }
+  }, 3000)
+
+  pollingTimers.value.set(orderId, timer)
+}
+
 onMounted(() => {
   fetchOrders()
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') {
+      fetchOrders()
+    }
+  })
+})
+
+onUnmounted(() => {
+  // 清理所有轮询定时器
+  pollingTimers.value.forEach(timer => clearInterval(timer))
+  pollingTimers.value.clear()
 })
 </script>
 

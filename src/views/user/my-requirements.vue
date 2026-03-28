@@ -81,6 +81,10 @@
           <el-date-picker v-model="reqForm.deadline" type="date" placeholder="选择交付日期" value-format="YYYY-MM-DD" />
         </el-form-item>
         
+        <el-form-item label="技术标签">
+          <TagInput v-model="reqForm.tags" placeholder="输入技术标签，如：Java、Vue、MySQL" />
+        </el-form-item>
+        
         <el-divider content-position="left">请求参数</el-divider>
         <el-form-item label="" prop="requestParams">
           <div class="params-container">
@@ -277,6 +281,7 @@ import { useUserStore } from '@/stores/user'
 import type { FormInstance, FormRules } from 'element-plus'
 import { getStatusInfo, REQUIREMENT_STATUS } from '@/utils/status'
 import StatusTag from '@/components/StatusTag.vue'
+import TagInput from '@/components/TagInput.vue'
 
 const router = useRouter()
 
@@ -297,7 +302,8 @@ const reqForm = reactive<RequirementCreateParams>({
   requestParams: [],
   responseParams: [],
   budget: 0,
-  deadline: ''
+  deadline: '',
+  tags: []
 })
 
 const showAfterSaleDialog = ref(false)
@@ -423,7 +429,8 @@ const editRequirement = (req: Requirement) => {
     requestParams: req.requestParams,
     responseParams: req.responseParams,
     budget: req.budget,
-    deadline: req.deadline
+    deadline: req.deadline,
+    tags: req.tags || []
   })
   showCreateDialog.value = true
 }
@@ -526,6 +533,7 @@ const resetForm = () => {
   reqForm.responseParams = []
   reqForm.budget = 0
   reqForm.deadline = ''
+  reqForm.tags = []
 }
 
 const openAfterSaleDialog = (req: Requirement) => {

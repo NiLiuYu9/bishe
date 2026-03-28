@@ -6,6 +6,14 @@ export interface UserInfo {
   isAdmin?: number
   createTime?: string
   status?: number
+  freezeReason?: string
+  tags?: string[]
+}
+
+export interface LoginResult {
+  id: number
+  username: string
+  isAdmin?: number
 }
 
 export interface LoginParams {
