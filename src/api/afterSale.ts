@@ -1,5 +1,13 @@
+/**
+ * 售后管理 API 请求模块
+ * 
+ * 对应后端 RequirementAfterSaleController（/requirement/after-sale），提供售后申请、裁定、对话等接口
+ * 售后状态流转：pending(待处理) → resolved(已解决) / rejected(已驳回)
+ * 【后端类比】相当于后端 RequirementAfterSaleController 的前端调用层，类似 Feign Client / Dubbo Consumer
+ */
 import { request, apiEndpoints } from '@/utils/request'
 
+/** 售后信息 */
 export interface AfterSale {
   id: number
   requirementId: number
@@ -10,8 +18,6 @@ export interface AfterSale {
   developerName: string
   reason: string
   unimplementedFeatures: string
-  developerResponse: string
-  developerResponseTime: string
   adminId: number
   adminName: string
   adminDecision: string
@@ -35,10 +41,6 @@ export interface AfterSaleMessage {
 export const afterSaleApi = {
   create(data: { requirementId: number; reason: string; unimplementedFeatures?: string }) {
     return request.post<AfterSale>(apiEndpoints.afterSale.create, data)
-  },
-
-  respond(id: number, developerResponse: string) {
-    return request.post<void>(`${apiEndpoints.afterSale.respond}/${id}`, { developerResponse })
   },
 
   decide(id: number, data: { adminDecision: string; result?: string }) {

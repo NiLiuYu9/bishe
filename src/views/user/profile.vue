@@ -1,3 +1,13 @@
+<!--
+  =====================================================
+  个人资料页面 —— 相当于后端的用户信息编辑页面
+  =====================================================
+  
+  【核心概念】查看和编辑用户信息（用户名/邮箱/手机号），管理AK/SK密钥
+  
+  【后端类比】用户信息编辑页面，对应后端 AuthController.updateUserInfo()
+    AK/SK管理对应后端 AccessKeyController
+-->
 <template>
   <div class="profile-page">
     <div class="profile-header">

@@ -1,5 +1,13 @@
+/**
+ * API评价相关请求模块
+ * 
+ * 对应后端 ApiReviewController（/review），提供评价创建、回复、查询等接口
+ * 评价支持嵌套回复：replyType 0=主评价, 1=用户回复, 2=发布者回复
+ * 【后端类比】相当于后端 ApiReviewController 的前端调用层，类似 Feign Client / Dubbo Consumer
+ */
 import { request, apiEndpoints } from '@/utils/request'
 
+/** API评价信息 */
 export interface ApiReview {
   id: number
   orderId: number

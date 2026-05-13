@@ -1,3 +1,13 @@
+<!--
+  =====================================================
+  API管理页面 —— 相当于后端的 API 审核/管理页面
+  =====================================================
+  
+  【核心概念】管理员审核/上下架所有API
+  
+  【后端类比】API管理页面，对应后端 ManagerController.apis()
+    类似后台管理系统的内容审核模块
+-->
 <template>
   <div class="admin-apis-page">
     <div class="page-header">
@@ -34,9 +44,10 @@
           </template>
         </el-table-column>
         <el-table-column prop="updateTime" label="更新时间" width="180" />
-        <el-table-column label="操作" width="200" fixed="right">
+        <el-table-column label="操作" width="240" fixed="right">
           <template #default="{ row }">
             <el-button text type="primary" @click="viewApi(row)">查看</el-button>
+            <el-button text type="primary" @click="goToDetail(row)">详情页</el-button>
             <template v-if="row.status === 'pending'">
               <el-button text type="success" @click="approveApi(row)">通过</el-button>
               <el-button text type="danger" @click="rejectApi(row)">拒绝</el-button>
@@ -104,6 +115,7 @@
 
 <script setup lang="ts">
 import { ref, reactive, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { adminApi } from '@/api/admin'
 import type { ApiItem } from '@/types/api'
@@ -111,6 +123,8 @@ import { getMethodType, getStatusInfo, API_STATUS } from '@/utils/status'
 import { getPriceUnit } from '@/utils/format'
 import StatusTag from '@/components/StatusTag.vue'
 import MethodTag from '@/components/MethodTag.vue'
+
+const router = useRouter()
 
 const loading = ref(false)
 const activeTab = ref('all')
@@ -155,6 +169,10 @@ const handleTabChange = () => {
 const viewApi = (api: ApiItem) => {
   currentApi.value = api
   apiDialogVisible.value = true
+}
+
+const goToDetail = (api: ApiItem) => {
+  router.push(`/api/${api.id}?from=admin`)
 }
 
 const approveApi = async (api: ApiItem) => {

@@ -1,25 +1,69 @@
+/**
+ * =====================================================
+ * 全局样式文件 —— 相当于后端的统一配置/公共资源
+ * =====================================================
+ *
+ * 【CSS 核心概念（给后端开发者）】
+ *   - CSS 是"层叠样式表"，用来控制网页的外观（颜色、字体、间距、布局等）
+ *   - 【后端类比】如果 HTML 是数据结构，CSS 就是展示逻辑
+ *   - CSS 选择器（如 .card、#app）相当于后端的"查询条件"，指定样式应用到哪些元素
+ *   - CSS 属性（如 color、font-size）相当于后端的"字段赋值"
+ *
+ * 【CSS 变量（Custom Properties）】
+ *   --primary: #1E40AF 定义了一个名为 --primary 的变量，值为蓝色
+ *   使用时用 var(--primary) 引用
+ *   【后端类比】相当于后端的常量定义，一处修改全局生效
+ *
+ * 【选择器类型】
+ *   :root —— 根选择器，定义全局 CSS 变量（相当于后端的全局配置）
+ *   * —— 通配符选择器，选中所有元素
+ *   .card —— 类选择器，选中 class="card" 的元素（相当于后端的按类型查询）
+ *   #app —— ID 选择器，选中 id="app" 的元素（相当于后端的主键查询）
+ *   a —— 标签选择器，选中所有 <a> 标签（相当于后端的按表查询）
+ */
+
+/* 从 Google Fonts 加载 Plus Jakarta Sans 字体 */
 @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap');
 
+/**
+ * :root —— 全局 CSS 变量定义
+ * 【后端类比】相当于后端的常量类 / application.yml 配置
+ * 所有组件都可以通过 var(--变量名) 使用这些变量
+ */
 :root {
-  --primary: #1E40AF;
-  --primary-light: #3B82F6;
-  --cta: #22C55E;
-  --background: #EFF6FF;
-  --text: #1E3A8A;
-  --text-muted: #475569;
-  --border: #E2E8F0;
-  --white: #FFFFFF;
-  --error: #EF4444;
-  --warning: #F59E0B;
-  --success: #22C55E;
+  --primary: #1E40AF;        /* 主色调：深蓝色 */
+  --primary-light: #3B82F6;  /* 主色调浅色：亮蓝色（用于悬停效果） */
+  --cta: #22C55E;            /* 行动号召色：绿色（用于购买/确认按钮） */
+  --background: #EFF6FF;     /* 背景色：浅蓝色 */
+  --text: #1E3A8A;           /* 主文本色：深蓝色 */
+  --text-muted: #475569;     /* 次要文本色：灰色 */
+  --border: #E2E8F0;         /* 边框色：浅灰色 */
+  --white: #FFFFFF;          /* 白色 */
+  --error: #EF4444;          /* 错误色：红色 */
+  --warning: #F59E0B;        /* 警告色：橙色 */
+  --success: #22C55E;        /* 成功色：绿色 */
 }
 
+/**
+ * * —— 全局重置
+ * 清除浏览器默认的 margin/padding，统一使用 border-box 盒模型
+ * 【后端类比】相当于后端的初始化配置，确保所有环境一致
+ * box-sizing: border-box —— 让 width/height 包含 padding 和 border
+ *   （默认的 content-box 不包含，容易导致布局错乱）
+ */
 * {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
 }
 
+/**
+ * body —— 页面主体样式
+ * font-family —— 字体列表，浏览器按顺序查找可用字体
+ * line-height: 1.6 —— 行高（1.6倍字号，阅读舒适）
+ * color: var(--text) —— 使用 CSS 变量设置文本颜色
+ * background-color: var(--background) —— 使用 CSS 变量设置背景色
+ */
 body {
   font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   line-height: 1.6;
@@ -29,6 +73,11 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
+/**
+ * a —— 链接样式
+ * text-decoration: none —— 去掉链接默认的下划线
+ * transition: color 0.2s —— 颜色变化时0.2秒过渡动画（让交互更平滑）
+ */
 a {
   color: var(--primary);
   text-decoration: none;
@@ -44,6 +93,11 @@ button {
   font-family: inherit;
 }
 
+/**
+ * Element Plus 组件样式覆盖
+ * 覆盖 Element Plus 按钮的默认颜色，使用项目的主题色
+ * --el-button-bg-color 等 是 Element Plus 的 CSS 变量
+ */
 .el-button--primary {
   --el-button-bg-color: var(--primary);
   --el-button-border-color: var(--primary);
@@ -63,6 +117,13 @@ button {
   color: var(--primary);
 }
 
+/**
+ * .card —— 通用卡片样式
+ * 【后端类比】相当于后端的通用返回格式，所有卡片都使用这个基础样式
+ * border-radius: 12px —— 圆角（12像素，让卡片看起来更柔和）
+ * box-shadow —— 阴影效果（让卡片有"浮起"的视觉效果）
+ * transition —— 过渡动画（悬停时阴影变大，有"抬起"效果）
+ */
 .card {
   background: var(--white);
   border-radius: 12px;
@@ -75,6 +136,7 @@ button {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
 }
 
+/* 通用标题样式 */
 .page-title {
   font-size: 24px;
   font-weight: 600;
@@ -89,74 +151,34 @@ button {
   margin-bottom: 16px;
 }
 
-.text-muted {
-  color: var(--text-muted);
-}
+/* 通用文本颜色类 */
+.text-muted { color: var(--text-muted); }
+.text-primary { color: var(--primary); }
+.text-success { color: var(--success); }
+.text-error { color: var(--error); }
 
-.text-primary {
-  color: var(--primary);
-}
+/* 通用间距类（mb=margin-bottom, mt=margin-top） */
+.mb-16 { margin-bottom: 16px; }
+.mb-24 { margin-bottom: 24px; }
+.mt-16 { margin-top: 16px; }
+.mt-24 { margin-top: 24px; }
 
-.text-success {
-  color: var(--success);
-}
+/* 通用 Flex 布局类 */
+.flex { display: flex; }
+.flex-center { display: flex; align-items: center; justify-content: center; }
+.flex-between { display: flex; align-items: center; justify-content: space-between; }
+.gap-8 { gap: 8px; }
+.gap-16 { gap: 16px; }
+.gap-24 { gap: 24px; }
 
-.text-error {
-  color: var(--error);
-}
+.cursor-pointer { cursor: pointer; }
+.transition-colors { transition: color 0.2s, background-color  0.2s, border-color 0.2s; }
 
-.mb-16 {
-  margin-bottom: 16px;
-}
-
-.mb-24 {
-  margin-bottom: 24px;
-}
-
-.mt-16 {
-  margin-top: 16px;
-}
-
-.mt-24 {
-  margin-top: 24px;
-}
-
-.flex {
-  display: flex;
-}
-
-.flex-center {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.flex-between {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.gap-8 {
-  gap: 8px;
-}
-
-.gap-16 {
-  gap: 16px;
-}
-
-.gap-24 {
-  gap: 24px;
-}
-
-.cursor-pointer {
-  cursor: pointer;
-}
-
-.transition-colors {
-  transition: color 0.2s, background-color 0.2s, border-color 0.2s;
-}
-
+/**
+ * 无障碍：减少动画
+ * 当用户系统设置了"减少动画"偏好时，禁用所有动画和过渡
+ * 【后端类比】相当于后端的兼容性处理，适配不同用户需求
+ */
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

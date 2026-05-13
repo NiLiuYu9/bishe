@@ -1,3 +1,20 @@
+<!--
+  =====================================================
+  API创建/编辑对话框组件 ApiCreateDialog —— 相当于后端的表单提交弹窗
+  =====================================================
+  
+  【核心概念】表单包含API名称、描述、请求方法、端点、价格等字段
+  支持创建新API和编辑已有API两种模式
+  
+  【后端类比】相当于后端的表单提交弹窗，类似 @RequestBody 接收的表单数据
+  
+  【Vue 组件核心概念（给后端开发者）】
+    - props（:editingApi）—— 编辑时传入的API数据，null表示创建模式
+    - v-model（visible）—— 双向绑定对话框显示状态，相当于后端的表单字段绑定
+    - ref（reactive form）—— 表单数据，相当于后端的 DTO 对象
+    - emit（@success）—— 创建/编辑成功事件，相当于后端的回调函数
+    - async/await —— 异步调用后端API，相当于后端的远程调用
+-->
 <template>
   <el-dialog v-model="visible" :title="editingApi ? '编辑API' : '上架新API'" width="900px" @closed="handleClose">
     <el-form ref="formRef" :model="apiForm" :rules="rules" label-width="100px">

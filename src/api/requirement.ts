@@ -1,3 +1,10 @@
+/**
+ * 需求管理 API 请求模块
+ * 
+ * 对应后端 RequirementController（/requirement），提供需求发布、申请、接单、交付等接口
+ * 需求状态流转：open → in_progress → delivered → completed / cancelled
+ * 【后端类比】相当于后端 RequirementController 的前端调用层，类似 Feign Client / Dubbo Consumer
+ */
 import { request, apiEndpoints } from '@/utils/request'
 import type { Requirement, RequirementCreateParams, RequirementListParams } from '@/types/requirement'
 

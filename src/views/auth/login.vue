@@ -1,3 +1,18 @@
+<!--
+  =====================================================
+  登录页 —— 相当于后端的登录表单页面
+  =====================================================
+  
+  【核心概念】用户输入用户名和密码登录，登录成功后跳转首页或redirect指定页面
+  
+  【后端类比】登录表单页面，对应后端 AuthController.login()
+  
+  【页面生命周期（给后端开发者）】
+    - 用户填写表单 → 相当于后端接收 LoginParams DTO
+    - 调用 authApi.login() → 相当于后端调用 AuthService.login()
+    - 登录成功跳转 → 相当于后端 redirect:/home
+    - redirect 参数 → 相当于后端的 originalUrl，登录后跳回原页面
+-->
 <template>
   <div class="login-page">
     <div class="login-container">

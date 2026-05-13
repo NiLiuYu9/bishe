@@ -1,3 +1,18 @@
+<!--
+  =====================================================
+  API在线测试页 —— 相当于后端的 Swagger Try it out
+  =====================================================
+  
+  【核心概念】输入参数调用API，查看返回结果，支持保存测试记录
+  
+  【后端类比】API 在线测试页面，对应后端 TestController.call()
+    类似 Swagger 的 "Try it out" 功能
+  
+  【页面生命周期（给后端开发者）】
+    - onMounted → 获取API详情和今日测试次数
+    - 用户填写参数 → 相当于后端接收 TestCallParams
+    - 调用 testApi.testCall() → 相当于后端通过网关调用目标API
+-->
 <template>
   <div class="api-test-page">
     <div class="back-link">

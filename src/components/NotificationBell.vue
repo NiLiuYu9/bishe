@@ -1,3 +1,19 @@
+<!--
+  =====================================================
+  通知铃铛组件 NotificationBell —— 相当于后端的消息提醒图标
+  =====================================================
+  
+  【核心概念】显示在导航栏，点击展开通知面板，角标显示未读数量
+  连接 WebSocket 实时接收新消息通知
+  
+  【后端类比】相当于后端页面的消息提醒图标，类似小红点提示
+  
+  【Vue 组件核心概念（给后端开发者）】
+    - ref —— 响应式数据，相当于后端的成员变量
+    - computed —— 计算属性，相当于后端的 getter 方法
+    - onMounted/onUnmounted —— 生命周期钩子，相当于后端的 @PostConstruct/@PreDestroy
+    - Pinia Store —— 状态管理，相当于后端的 Redis/Session
+-->
 <template>
   <el-popover
     ref="popoverRef"

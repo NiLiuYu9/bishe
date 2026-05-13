@@ -1,3 +1,18 @@
+<!--
+  =====================================================
+  需求详情页 —— 相当于后端的需求详情页面
+  =====================================================
+  
+  【核心概念】展示需求详情、申请人列表，支持申请接单/选择开发者/交付
+  
+  【后端类比】需求详情页面，对应后端 RequirementController.detail()
+    类似众包平台的任务详情页，包含状态流转操作
+  
+  【页面生命周期（给后端开发者）】
+    - onMounted → 根据路由参数 id 获取需求详情
+    - route.params.id → 相当于后端的 @PathVariable Long id
+    - 状态操作 → 对应后端的各种状态流转接口（apply/selectApplicant/deliver/complete等）
+-->
 <template>
   <div class="requirement-detail-page">
     <div class="back-link">

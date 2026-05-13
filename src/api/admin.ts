@@ -1,3 +1,10 @@
+/**
+ * 管理后台 API 请求模块
+ * 
+ * 对应后端 ManagerController（/admin），提供用户管理、API审核、订单管理、需求管理、统计等接口
+ * 所有接口需要管理员权限（isAdmin=1）
+ * 【后端类比】相当于后端 ManagerController 的前端调用层，类似 Feign Client / Dubbo Consumer
+ */
 import { request, apiEndpoints } from '@/utils/request'
 import axios from 'axios'
 import config from '@/config'

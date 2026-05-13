@@ -1,3 +1,19 @@
+<!--
+  =====================================================
+  我的API页面 —— 相当于后端的"我发布的API"管理页面
+  =====================================================
+  
+  【核心概念】管理已发布的API，支持创建/编辑/上下架操作
+  
+  【后端类比】"我发布的API"管理页面，对应后端 ApiController.getApis()
+    类似电商平台的"我的商品"管理页
+  
+  【页面生命周期（给后端开发者）】
+    - onMounted → 加载我发布的API列表
+    - 创建API → 相当于后端调用 ApiController.create()
+    - 编辑API → 相当于后端调用 ApiController.update()
+    - 上下架 → 相当于后端调用 ApiController.updateStatus()
+-->
 <template>
   <div class="my-apis-page">
     <div class="page-header">

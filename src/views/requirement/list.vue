@@ -1,3 +1,18 @@
+<!--
+  =====================================================
+  需求广场列表页 —— 相当于后端的需求列表页面
+  =====================================================
+  
+  【核心概念】展示所有开放中的需求，开发者可申请接单
+  
+  【后端类比】需求列表页面，对应后端 RequirementController.list()
+    类似众包平台的任务列表
+  
+  【页面生命周期（给后端开发者）】
+    - onMounted → 加载需求列表
+    - 调用 requirementApi.getList() → 相当于后端调用 RequirementService.list()
+    - 分页/筛选变化 → 重新获取数据
+-->
 <template>
   <div class="requirement-list-page">
     <div class="page-content">

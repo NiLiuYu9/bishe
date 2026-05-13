@@ -1,3 +1,20 @@
+<!--
+  =====================================================
+  评价回复线程组件 ReviewThread —— 相当于后端的评论/回复展示组件
+  =====================================================
+  
+  【核心概念】展示评价及其嵌套回复，支持用户和发布者回复
+  回复类型：0=主评价, 1=发布者回复, 2=用户回复
+  
+  【后端类比】相当于后端的评论/回复展示组件，类似电商平台的评价列表
+  
+  【Vue 组件核心概念（给后端开发者）】
+    - props（:review）—— 评价数据（含回复列表），相当于后端的方法参数
+    - props（:apiOwnerId）—— API发布者ID，用于判断回复权限
+    - ref —— 回复输入框数据，相当于后端的成员变量
+    - emit（@reply-success）—— 回复成功事件，相当于后端的回调函数
+    - async/await —— 异步调用后端API
+-->
 <template>
   <div class="review-thread">
     <div class="review-item">
@@ -74,6 +91,7 @@
             :key="reply.id"
             class="reply-item"
             :class="{
+              // replyType: 0=原评论, 1=API发布者回复, 2=评论者回复
               'publisher-reply': reply.replyType === 1,
               'user-reply': reply.replyType === 2
             }"

@@ -1,3 +1,18 @@
+<!--
+  =====================================================
+  API详情页 —— 相当于后端的 API 详情页面
+  =====================================================
+  
+  【核心概念】展示API的完整信息（描述/参数/价格/评价），支持购买和在线测试
+  
+  【后端类比】API 详情页面，对应后端 ApiController.detail()
+    类似电商平台的商品详情页
+  
+  【页面生命周期（给后端开发者）】
+    - onMounted → 根据路由参数 id 获取API详情
+    - route.params.id → 相当于后端的 @PathVariable Long id
+    - 调用 apiManagement.getApiDetail() → 相当于后端调用 ApiService.getById()
+-->
 <template>
   <div class="api-detail-page">
     <div class="back-link">
@@ -205,8 +220,11 @@ const reviewsPage = ref(1)
 const reviewsTotal = ref(0)
 const currentUserId = computed(() => userStore.userInfo?.id || 0)
 
+// 需要同时满足三个条件才显示审核按钮：1.是管理员 2.从管理页面进入 3.API状态为待审核
 const showAuditButtons = computed(() => {
-  const isAdmin = userStore.userInfo?.isAdmin === 1
+  const userInfo = userStore.userInfo
+  if (!userInfo) return false
+  const isAdmin = userInfo.isAdmin === 1 || userInfo.isAdmin === true
   const isFromAdmin = route.query.from === 'admin'
   const isPending = api.value.status === 'pending'
   return isAdmin && isFromAdmin && isPending
@@ -238,6 +256,7 @@ const api = ref<ApiItem>({
 })
 
 const purchaseForm = reactive({
+  // '100'/'500'/'2000'为预设购买数量选项，'custom'为自定义数量
   countOption: '100',
   invokeCount: 100
 })
@@ -246,6 +265,7 @@ const rejectForm = reactive({ reason: '' })
 
 const reviews = ref<ApiReview[]>([])
 
+// 折扣阶梯规则：购买100次以下无折扣，100-499次9折，500-1999次8折，2000次以上7折
 const getDiscount = (count: number): number => {
   if (count >= 2000) return 0.7
   if (count >= 500) return 0.8

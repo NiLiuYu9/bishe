@@ -1,3 +1,17 @@
+<!--
+  =====================================================
+  注册页 —— 相当于后端的注册表单页面
+  =====================================================
+  
+  【核心概念】新用户注册账号，注册成功后自动登录
+  
+  【后端类比】注册表单页面，对应后端 AuthController.register()
+  
+  【页面生命周期（给后端开发者）】
+    - 用户填写表单 → 相当于后端接收 RegisterParams DTO
+    - 调用 authApi.register() → 相当于后端调用 AuthService.register()
+    - 注册成功自动登录 → 相当于后端注册后自动创建 Session
+-->
 <template>
   <div class="register-page">
     <div class="register-container">

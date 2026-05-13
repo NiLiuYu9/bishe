@@ -1,3 +1,13 @@
+<!--
+  =====================================================
+  我的订单页面 —— 相当于后端的订单列表页面
+  =====================================================
+  
+  【核心概念】展示用户购买API的订单列表，支持支付/评价/查看详情
+  
+  【后端类比】订单列表页面，对应后端 OrderController.list()
+    类似电商平台的"我的订单"
+-->
 <template>
   <div class="orders-page">
     <h2 class="page-title">我的订单</h2>
@@ -29,6 +39,7 @@
           <div class="order-body">
             <div class="api-info">
               <h4>{{ order.apiName }}</h4>
+              <!-- invokeCount为-1表示无限次调用 -->
               <p>调用次数: {{ order.invokeCount === -1 ? '无限' : order.invokeCount }}次</p>
             </div>
             <div class="price-info">
@@ -186,6 +197,7 @@ watch(() => pagination.pageSize, () => {
   fetchOrders()
 })
 
+// 支付宝PC网站支付流程：后端返回HTML表单字符串 → 前端将表单插入DOM → 自动提交表单跳转到支付宝支付页面
 const handlePay = async (order: Order) => {
   try {
     const res = await tradeApi.pay(order.id)
@@ -308,30 +320,48 @@ const checkPaymentStatus = async (orderId: number) => {
 }
 
 const startPaymentPolling = (orderId: number) => {
-  // 如果已经在轮询这个订单，先清除
   if (pollingTimers.value.has(orderId)) {
     clearInterval(pollingTimers.value.get(orderId))
   }
 
   let count = 0
-  const maxCount = 120 // 增加到6分钟，给用户更多支付时间
-  const timer = setInterval(async () => {
+  const maxCount = 120
+  const poll = async () => {
     count++
     const paid = await checkPaymentStatus(orderId)
     if (paid || count >= maxCount) {
       clearInterval(timer)
       pollingTimers.value.delete(orderId)
     }
-  }, 3000)
+  }
 
+  poll()
+
+  const timer = setInterval(poll, 3000)
   pollingTimers.value.set(orderId, timer)
 }
 
-onMounted(() => {
+const checkAndSyncPendingOrders = async () => {
+  const pendingOrders = orders.value.filter(o => o.status === 'pending')
+  for (const order of pendingOrders) {
+    try {
+      const res = await tradeApi.queryPayStatus(order.id)
+      if (res.data?.orderStatus === 'paid') {
+        ElMessage.success(`订单 ${order.orderNo} 支付成功`)
+      }
+    } catch (error) {
+      console.error('同步订单支付状态失败:', error)
+    }
+  }
   fetchOrders()
+}
+
+onMounted(async () => {
+  await fetchOrders()
+  checkAndSyncPendingOrders()
   document.addEventListener('visibilitychange', () => {
     if (document.visibilityState === 'visible') {
-      fetchOrders()
+      checkAndSyncPendingOrders()
     }
   })
 })
